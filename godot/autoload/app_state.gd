@@ -303,7 +303,7 @@ func complete_endless_run(game_id: String, score: int, stage: int, elapsed_ms: i
 	var safe_score := maxi(0, score)
 	var safe_stage := maxi(1, stage)
 	# Pay for equations earned, never simply for starting and ending a run.
-	var reward := mini(250, safe_score / 100)
+	var reward := RewardService.endless_reward(safe_score)
 	if reward > 0:
 		reward += CompanionAbilityService.reward_bonus(reward)
 	data["player"]["coins"] = coins() + reward

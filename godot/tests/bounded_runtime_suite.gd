@@ -49,7 +49,12 @@ func _unmount(instance: Node) -> void:
 
 
 func _run() -> void:
-	AppState.data = SaveService.default_profile("Bounded Suite")
+	if not SaveService.begin_test_session():
+		push_error("Bounded suites require an isolated save session")
+		get_tree().quit(1)
+		return
+	AppState.data = SaveService.create_profile("Bounded Suite")
+	AppState._has_unsaved_changes = false
 	AppState.data["rooms"]["sparkle"] = [{"instance_id": "room_companion_sparkle", "item_id": "companion_sparkle", "x": 50.0, "y": 61.0, "rotation": 0, "scale": 1.0, "z_index": 1}]
 	match suite:
 		"word": await _word_suite()
@@ -57,6 +62,7 @@ func _run() -> void:
 		"meta": await _meta_suite()
 		"shell": await _shell_suite()
 		_: _check(false, "unknown bounded suite %s" % suite)
+	SaveService.end_test_session()
 	if failures.is_empty():
 		print("BOUNDED_RUNTIME_%s_OK: %d checks" % [suite.to_upper(), checks])
 		get_tree().quit(0)
@@ -206,7 +212,7 @@ func _mathtris_power_contract(game: Node) -> void:
 	_mathtris_fixture(game, [Vector2i(3, 8), Vector2i(3, 10)])
 	_check(game.call("apply_companion_power", "star") and game.board[8][3] == "", "Star clears the fullest occupied column")
 	_mathtris_fixture(game, [])
-	_check(game.call("apply_companion_power", "cloud") and game.slow_until_ms > Time.get_ticks_msec(), "Cloud applies its eighteen-second slow")
+	_check(game.call("apply_companion_power", "cloud") and game.slow_until_ms - game.level_run.elapsed_ms() >= 17990, "Cloud applies its eighteen-second slow using active play time")
 	_mathtris_fixture(game, [])
 	for col in 5: game.board[10][col] = ["1", "+", "1", "=", "3"][col]
 	_check(game.call("apply_companion_power", "dream") and game.equation_charge == 0 and game.score == 600, "Dream repairs exact hits for 120 points each without normal-match scoring")

@@ -11,3 +11,8 @@ func level_reward(level: int) -> int:
 
 func hint_cost(level: int) -> int:
 	return 0 if level <= 1 else PAID_HINT_COST
+
+
+func endless_reward(score: int) -> int:
+	# One coin per 100 earned points, capped before companion bonuses.
+	return mini(250, maxi(0, score) / 100)

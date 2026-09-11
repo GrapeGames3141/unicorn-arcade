@@ -382,7 +382,9 @@ func _stone_center_x(index: int) -> float:
 
 func _animate_jump(from_index: int, to_index: int) -> void:
 	if AppState.setting("reduced_motion", false):
-		await get_tree().create_timer(0.16).timeout
+		# A bound tween follows the game's pause state; a SceneTreeTimer keeps
+		# running when only this game's subtree is disabled by a dialog.
+		await create_tween().tween_interval(0.16).finished
 		if is_instance_valid(companion_preview):
 			companion_preview.position = _companion_world_position(to_index)
 		return

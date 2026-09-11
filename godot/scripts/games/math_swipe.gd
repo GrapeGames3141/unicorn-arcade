@@ -104,9 +104,10 @@ func _submit(card: Button) -> void:
 			message_label.text = "Correct!"
 			_refresh_question.call_deferred(_round_generation)
 	else:
-		level_run.fail("Wrong answer! Try this level again.")
+		var explanation := "The complete equation is %s. Try again!" % str(problem["display"]).replace("?", str(problem["correct"]))
+		level_run.fail(explanation)
 		active = level_run.active
-		message_label.text = "Wrong answer! Try this level again."
+		message_label.text = explanation
 		action_button.text = "Retry"
 		action_button.show()
 		_set_cards_enabled(false)

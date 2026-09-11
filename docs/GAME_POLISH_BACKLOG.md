@@ -8,6 +8,18 @@ Evidence comes from current source, direct inspection of the six shipped unicorn
 
 Priorities: **P1** = address in the next quality pass; **P2** = improve before a polished release; **P3** = later enrichment. Checkboxes mean work remains open, not that a bug has been reproduced on a device.
 
+## Implementation progress — September 11, 2026
+
+The first gameplay pass implements **B01–B05**. Their original findings remain below for context. Checked implementation tasks still need the separate physical-device checks at the end of this document.
+
+- **Shared pause:** Help/tutorials, profile, leave confirmation, focus loss, and app backgrounding pause the game subtree and its timers/input. Nested dialogs keep the game paused until all pause reasons clear. Run timing and Mathtris difficulty/slow effects use active play time. Reduced-motion Unicorn Jump landings also respect pause. Navigation with an open dialog avoids querying a detached scene.
+- **Math Swipe:** Taps and short/long swipes use one pointer gesture; keyboard button activation works. Accepted answers lock immediately, and stale deferred question changes are discarded. Wrong answers explain the complete equation.
+- **Mathtris:** Top-out now finishes an endless run, saves score/highest stage/personal best, and awards **one coin per 100 points, capped at 250 before companion bonuses**. Empty runs earn no coins. Duplicate top-out calls cannot duplicate results or rewards. PLAY AGAIN starts at stage 1; the profile shows BEST and run count. Cascades update the stage after all points are counted.
+- **Verification:** The added [`runtime_polish_integration.gd`](../godot/tests/runtime_polish_integration.gd) covers modal nesting, application pause, timer preservation, scene teardown, reduced-motion jumps, input dispatch, duplicate submissions, cascade progression, and serialized save/profile round-trips. It runs in an isolated in-memory save session and is included in the CI manifest. The bounded suites now also use isolated save sessions because Mathtris top-out writes results.
+- **Results:** All **83 focused regression checks** pass without script/runtime errors. Parse smoke loads 98 app scripts. The existing gameplay-correctness, three level-run, outcome, profile, Galaxy pause, bounded number/word, parity-rule, main-shell, dead-code, and ad-layout checks pass their assertions. The parity-rule and first level-run runners still emit resource-cleanup diagnostics at process exit; those are not claimed as clean-shutdown passes. Full CI and physical-device validation have not been run in this pass.
+- **Environment:** Implementation testing uses installed Linux Godot **4.7.1.stable.official.a13da4feb**, matching the prescribed Windows engine version. Logs and disposable Linux test data are under git-ignored `.tools/`. This is automated headless testing, not a physical-device or rendered art approval.
+- **Still open:** B06/B07, all 3D model tasks, the broader design improvements, and physical-device verification. No 3D meshes or textures have been modified in this pass.
+
 ## Start here
 
 1. Fix pause behavior, Mathtris progression, and Math Swipe input.
@@ -20,33 +32,33 @@ Priorities: **P1** = address in the next quality pass; **P2** = improve before a
 
 ### B01 — P1: Gameplay continues behind dialogs
 
-- [ ] Introduce shared pause/resume behavior for tutorials, profile, leave-run confirmation, and application interruptions.
+- [x] Introduce shared pause/resume behavior for tutorials, profile, leave-run confirmation, and application interruptions.
 - **Source finding:** [`game_experience.gd`](../godot/autoload/game_experience.gd), `_show_leave_run_modal()` and `_show_profile_overlay()`, create overlays without pausing the game. The leave dialog even says “STORYBOOK PAUSE.” `_maybe_show_tutorial()` only pauses Galaxy Unicorn. Sliding Window, Mathtris, Comet Math Rescue, and Unicorn Blast continue updating while active; Sight Spark's flash timer can also expire during its tutorial.
 - **Effect:** A player can lose time, miss a word, or lose a run while reading. Global `_input()` handlers also need modal guards; an overlay's mouse filter alone is not a complete input lock.
 - **Verify/fix completion:** Open each dialog for ten seconds in every timed game. Rival position, falling objects, lives, and answer state must remain unchanged. Resume once, with a brief countdown where useful. Exclude paused time from [`LevelRunController.elapsed_ms()`](../godot/scripts/games/level_run_controller.gd) and any wall-clock difficulty calculations.
 
 ### B02 — P1: Mathtris has no persistent run result or reward path
 
-- [ ] Give Mathtris an explicit endless-game result contract: save best score, runs played, highest stage, and an appropriate coin reward once per run.
+- [x] Give Mathtris an explicit endless-game result contract: save best score, runs played, highest stage, and an appropriate coin reward once per run.
 - **Source finding:** [`mathtris.gd`](../godot/scripts/games/mathtris.gd) always begins at level 1, changes its local level from score, and ends through `level_run.fail()`. It never calls `complete_level()` or `level_run.complete()`, and does not otherwise save the score. The common progress/reward write lives in [`AppState.complete_level()`](../godot/autoload/app_state.gd).
 - **Effect:** Playing Mathtris does not contribute completed progress or coins through the normal arcade system, and the final score disappears after the session. An endless mode should present a finished run and personal best rather than treat every ending as an ordinary failed level.
 - **Verify/fix completion:** Score points, top out, reopen the game/profile, and confirm the result persists. Retry and repeated outcome-button taps must not award the same run twice. Preserve starting at stage 1 if that is the intended endless rule.
 
 ### B03 — P2: Mathtris level can lag behind cascade score
 
-- [ ] Calculate the difficulty level after all cascade points have been added.
+- [x] Calculate the difficulty level after all cascade points have been added.
 - **Source finding:** `_clear_matches()` in [`mathtris.gd`](../godot/scripts/games/mathtris.gd) sets `level = score / 700 + 1` before the cascade loop, then adds cascade points without updating the level again.
 - **Verify/fix completion:** Trigger a cascade that crosses a 700-point boundary; the displayed stage and next drop's difficulty should immediately agree with the final score.
 
 ### B04 — P1: Math Swipe ignores ordinary short swipes and keyboard activation
 
-- [ ] Replace the gap in gesture acceptance with a clear tap/drag/cancel policy and connect accessible button activation.
+- [x] Replace the gap in gesture acceptance with a clear tap/drag/cancel policy and connect accessible button activation.
 - **Source finding:** `_card_input()` in [`math_swipe.gd`](../godot/scripts/games/math_swipe.gd) accepts movement only when it is **less than 5 or greater than 80 pixels**. A 5–80 pixel gesture does nothing despite the instruction “Swipe in any direction, or tap.” Cards connect `gui_input` to mouse/touch handling but have no `pressed` callback or keyboard submission branch.
 - **Verify/fix completion:** Test a tap and 10, 40, 80, and 100 pixel gestures; valid selections should behave predictably. Focus a card and activate it with Enter/Space. Each accepted gesture must submit exactly one answer.
 
 ### B05 — P1 investigation: Math Swipe can process the same answer during a pending round change
 
-- [ ] Lock the current question immediately after accepting an answer, and ignore stale input until the next question is ready.
+- [x] Lock the current question immediately after accepting an answer, and ignore stale input until the next question is ready.
 - **Source risk, runtime reproduction needed:** `_submit()` schedules `_new_problem.call_deferred()` after a correct non-final answer while leaving `active` and both cards enabled. Another submission before that deferred call can increment `completed` for the same question. The handler also accepts both mouse and touch event families.
 - **Verify/fix completion:** Exercise rapid taps, two fingers, and touch with mouse emulation. A question may increment progress only once, and a queued refresh must not re-enable cards after the run ends.
 

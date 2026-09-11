@@ -40,7 +40,10 @@ func set_pause_reason(reason: StringName, value: bool) -> void:
 		process_mode = Node.PROCESS_MODE_DISABLED
 	else:
 		process_mode = _unpaused_process_mode
-		publish_runtime_state()
+		# A dialog also exits when its whole scene is being removed. The game
+		# no longer has a tree in that case, so do not publish a UI snapshot.
+		if is_inside_tree() and not is_queued_for_deletion():
+			publish_runtime_state()
 
 
 func pause_for_dialog(dialog: Control) -> void:
