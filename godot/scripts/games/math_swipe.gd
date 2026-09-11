@@ -11,7 +11,10 @@ var active := false
 var started_ms := 0
 var problem: Dictionary = {}
 var cards: Array[Button] = []
-var press_start := {}
+var _gesture_card: Button
+var _pointer_id := -2
+var _answer_pending := false
+var _round_generation := 0
 var problem_label: Label
 var progress_label: Label
 var message_label: Label
@@ -29,6 +32,7 @@ func _start_level(for_level: int) -> void:
 
 
 func _start_level_with_lifecycle(for_level: int, begin_run: bool) -> void:
+	_round_generation += 1
 	level = for_level
 	if begin_run:
 		level_run.begin("math_swipe", level)
@@ -67,6 +71,9 @@ func generate_problem(for_level: int, rng: RandomNumberGenerator = null) -> Dict
 
 
 func _new_problem() -> void:
+	_answer_pending = false
+	_gesture_card = null
+	_pointer_id = -2
 	problem = generate_problem(level)
 	problem_label.text = problem["display"]
 	progress_label.text = "LEVEL %d     %d / %d" % [level, completed, target]
@@ -80,8 +87,10 @@ func _new_problem() -> void:
 
 
 func _submit(card: Button) -> void:
-	if not active:
+	if not active or gameplay_paused or _answer_pending or card.disabled:
 		return
+	_answer_pending = true
+	_set_cards_enabled(false)
 	if bool(card.get_meta("correct")):
 		completed += 1
 		if completed >= target:
@@ -93,7 +102,7 @@ func _submit(card: Button) -> void:
 			_set_cards_enabled(false)
 		else:
 			message_label.text = "Correct!"
-			_new_problem.call_deferred()
+			_refresh_question.call_deferred(_round_generation)
 	else:
 		level_run.fail("Wrong answer! Try this level again.")
 		active = level_run.active
@@ -101,6 +110,11 @@ func _submit(card: Button) -> void:
 		action_button.text = "Retry"
 		action_button.show()
 		_set_cards_enabled(false)
+
+
+func _refresh_question(generation: int) -> void:
+	if generation == _round_generation and active:
+		_new_problem()
 
 
 func can_retry_failure() -> bool:
@@ -130,24 +144,43 @@ func can_show_hint() -> bool:
 
 
 func _card_input(event: InputEvent, card: Button) -> void:
-	if not active:
+	if not active or gameplay_paused or _answer_pending or card.disabled:
 		return
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
-			press_start[card] = event.position
-		else:
-			var distance: float = event.position.distance_to(press_start.get(card, event.position))
-			if distance < 5.0 or distance > 80.0:
-				_submit(card)
-			press_start.erase(card)
-	elif event is InputEventScreenTouch:
-		if event.pressed:
-			press_start[card] = event.position
-		else:
-			var distance: float = event.position.distance_to(press_start.get(card, event.position))
-			if distance < 5.0 or distance > 80.0:
-				_submit(card)
-			press_start.erase(card)
+	var pointer := -2
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		pointer = -1
+	elif event is InputEventScreenTouch and event.pressed:
+		pointer = event.index
+	if pointer != -2:
+		if _pointer_id == -2:
+			_gesture_card = card
+			_pointer_id = pointer
+		card.accept_event()
+
+
+func _input(event: InputEvent) -> void:
+	if _pointer_id == -2:
+		return
+	var released: bool = event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed and _pointer_id == -1
+	if event is InputEventScreenTouch:
+		released = event.index == _pointer_id and not event.pressed
+	if not released:
+		return
+	var card := _gesture_card
+	_gesture_card = null
+	_pointer_id = -2
+	get_viewport().set_input_as_handled()
+	if event is InputEventScreenTouch and event.canceled:
+		return
+	if is_instance_valid(card):
+		_submit(card)
+
+
+func set_pause_reason(reason: StringName, value: bool) -> void:
+	super.set_pause_reason(reason, value)
+	if gameplay_paused:
+		_gesture_card = null
+		_pointer_id = -2
 
 
 func _build_ui() -> void:
@@ -200,6 +233,7 @@ func _build_ui() -> void:
 		card.add_theme_font_size_override("font_size", 72)
 		StorybookUI.apply_button(card, Color("241c55"), false, 22)
 		card.gui_input.connect(_card_input.bind(card))
+		card.pressed.connect(_submit.bind(card))
 		row.add_child(card)
 		cards.append(card)
 	message_label = Label.new()

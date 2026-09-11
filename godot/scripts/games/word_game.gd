@@ -72,7 +72,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	super(delta)
 	if active:
-		_update_timer_display(Time.get_ticks_msec())
+		_update_timer_display(started_ms + level_run.elapsed_ms())
 	if active and game_id == "unicorn_blast":
 		_update_blast(delta * CompanionAbilityService.time_scale())
 

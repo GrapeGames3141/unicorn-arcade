@@ -299,6 +299,28 @@ func complete_level(game_id: String, level: int, elapsed_ms: int) -> int:
 	return reward
 
 
+func complete_endless_run(game_id: String, score: int, stage: int, elapsed_ms: int) -> int:
+	var safe_score := maxi(0, score)
+	var safe_stage := maxi(1, stage)
+	# Pay for equations earned, never simply for starting and ending a run.
+	var reward := mini(250, safe_score / 100)
+	if reward > 0:
+		reward += CompanionAbilityService.reward_bonus(reward)
+	data["player"]["coins"] = coins() + reward
+	var progress: Dictionary = data.get("progress", {})
+	var record: Dictionary = progress.get(game_id, {})
+	var completed: Array = record.get("completed", [])
+	completed.append({"level": safe_stage, "score": safe_score, "time": elapsed_ms, "date": Time.get_datetime_string_from_system(true), "mode": "endless"})
+	record["completed"] = completed
+	record["best_score"] = maxi(int(record.get("best_score", 0)), safe_score)
+	record["highest_stage"] = maxi(int(record.get("highest_stage", 1)), safe_stage)
+	record["max_level"] = maxi(int(record.get("max_level", 1)), safe_stage)
+	progress[game_id] = record
+	data["progress"] = progress
+	_save_and_emit()
+	return reward
+
+
 func _save_and_emit() -> bool:
 	var was_dirty := _has_unsaved_changes
 	var saved := SaveService.save_state(data)

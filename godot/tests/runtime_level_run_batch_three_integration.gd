@@ -92,9 +92,11 @@ func _test_mathtris(issues: Array[String]) -> void:
 	var records_before := _records("mathtris")
 	game._game_over()
 	game._game_over()
-	if game.active or game.level_run.outcome != LevelRunController.Outcome.FAILURE or int(game.runtime_snapshot().get("outcome", -1)) != LevelRunController.Outcome.FAILURE or not game.can_retry_failure() or AppState.coins() != coins_before or _records("mathtris") != records_before or game.action_button.text != "PLAY AGAIN" or not game.action_button.visible:
-		issues.append("Mathtris top-out is an idempotent unpaid lifecycle failure")
-	game.retry_failure()
+	if game.active or game.level_run.outcome != LevelRunController.Outcome.SUCCESS or AppState.coins() != coins_before + 11 or _records("mathtris") != records_before + 1 or game.action_button.text != "PLAY AGAIN" or not game.action_button.visible:
+		issues.append("Mathtris top-out saves and rewards one endless run")
+	if int(AppState.progress_for_game("mathtris").get("best_score", 0)) != 1100:
+		issues.append("Mathtris retains the personal best")
+	game._advance_game()
 	if not game.active or int(game.runtime_snapshot().get("outcome", -1)) != LevelRunController.Outcome.RUNNING or game.level != 1 or game.level_run.level != 1 or CompanionAbilityService.game_id != "mathtris" or CompanionAbilityService.level != 1:
 		issues.append("Mathtris typed PLAY AGAIN retries the run")
 	_unmount(game)

@@ -19,7 +19,6 @@ var kills := 0
 var score := 0
 var lives := 3
 var active := false
-var gameplay_paused := false
 var player_x := 0.5
 var bullets: Array[Dictionary] = []
 var bolt_flashes: Array[Dictionary] = []
@@ -128,10 +127,6 @@ func _start_level_with_lifecycle(for_level: int, begin_run: bool) -> void:
 	var companion_name := str(AppState.equipped_companion()).capitalize()
 	message_label.text = "Drag %s left and right. Rainbow bolts fire automatically." % companion_name
 	action_button.hide()
-
-
-func set_gameplay_paused(paused: bool) -> void:
-	gameplay_paused = paused
 
 
 func _spawn_enemy(force_boss: bool) -> void:

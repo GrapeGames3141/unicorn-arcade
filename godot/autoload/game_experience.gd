@@ -27,6 +27,23 @@ var outcome_overlay: Control
 var sparkle_retry_overlay: Control
 var persistence_warning_layer: CanvasLayer
 var persistence_warning_banner: PanelContainer
+var _application_paused := false
+var _focus_lost := false
+
+
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_APPLICATION_PAUSED: _application_paused = true
+		NOTIFICATION_APPLICATION_RESUMED: _application_paused = false
+		NOTIFICATION_WM_WINDOW_FOCUS_OUT: _focus_lost = true
+		NOTIFICATION_WM_WINDOW_FOCUS_IN: _focus_lost = false
+		_: return
+	_sync_application_pause()
+
+
+func _sync_application_pause() -> void:
+	if is_instance_valid(attached_controller):
+		attached_controller.set_pause_reason(&"application", _application_paused or _focus_lost)
 
 
 func _ready() -> void:
@@ -104,6 +121,9 @@ func _process(delta: float) -> void:
 		return
 	if attached_game_id.is_empty() or not is_instance_valid(scene):
 		return
+	if is_instance_valid(attached_controller) and attached_controller.gameplay_paused:
+		inactivity_seconds = 0.0
+		return
 	inactivity_seconds += delta
 	update_accumulator += delta
 	if update_accumulator >= 0.15:
@@ -131,6 +151,7 @@ func _attach_scene(scene: Node) -> void:
 		return
 	attached_game_id = AppState.selected_game_id
 	attached_controller = scene as ArcadeGameController
+	_sync_application_pause()
 	if is_instance_valid(attached_controller):
 		if not attached_controller.runtime_state_changed.is_connected(_on_runtime_state_changed):
 			attached_controller.runtime_state_changed.connect(_on_runtime_state_changed)
@@ -473,7 +494,7 @@ func _show_game_outcome() -> void:
 		controller.conceal_progression_action()
 	elif is_instance_valid(legacy):
 		legacy.hide()
-	var presentation := outcome_presenter.build_game_outcome(attached_scene as Control, retry, str(snapshot.get("outcome_message", "")) if is_instance_valid(controller) else _outcome_message())
+	var presentation := outcome_presenter.build_game_outcome(attached_scene as Control, retry, str(snapshot.get("outcome_message", "")) if is_instance_valid(controller) else _outcome_message(), attached_game_id == "mathtris")
 	var overlay := presentation["overlay"] as Control
 	outcome_overlay = overlay
 	var primary := presentation["primary"] as Button
@@ -685,13 +706,6 @@ func _maybe_show_tutorial(force_replay: bool) -> void:
 	var dialog := _create_game_dialog("GuidedTutorialOverlay", 0.07, 0.93, 0.20, 0.80)
 	var overlay := dialog["owner"] as Control
 	var card := dialog["card"] as PanelContainer
-	if attached_game_id == "galaxy_unicorn" and attached_scene.has_method("set_gameplay_paused"):
-		var tutorial_scene := attached_scene
-		tutorial_scene.call("set_gameplay_paused", true)
-		overlay.tree_exited.connect(func() -> void:
-			if is_instance_valid(tutorial_scene) and tutorial_scene.has_method("set_gameplay_paused"):
-				tutorial_scene.call("set_gameplay_paused", false)
-		)
 	overlay.set_meta("lessons", lessons)
 	overlay.set_meta("step", 0)
 	overlay.set_meta("game_id", attached_game_id)
@@ -748,6 +762,8 @@ func _create_game_dialog(node_name: String, left: float, right: float, top: floa
 	if attached_scene.has_method("_insert_non_obstructing_dialog"):
 		var owner := MarginContainer.new()
 		owner.name = node_name
+		if is_instance_valid(attached_controller):
+			attached_controller.pause_for_dialog(owner)
 		owner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		owner.add_theme_constant_override("margin_left", 4)
 		owner.add_theme_constant_override("margin_right", 4)
@@ -764,6 +780,8 @@ func _create_game_dialog(node_name: String, left: float, right: float, top: floa
 func _modal_backdrop(node_name: String) -> ColorRect:
 	var overlay := ColorRect.new()
 	overlay.name = node_name
+	if is_instance_valid(attached_controller):
+		attached_controller.pause_for_dialog(overlay)
 	overlay.color = Color(0.02, 0.03, 0.10, 0.82)
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

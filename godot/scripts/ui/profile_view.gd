@@ -293,6 +293,8 @@ func _build_game_tile(game: Dictionary, category: String) -> PanelContainer:
 	stack.add_child(title_line)
 	var progress_line := Label.new()
 	progress_line.text = "LV %d  %s  %d RUNS" % [level, String.chr(0x2022), completed.size()]
+	if game["id"] == "mathtris":
+		progress_line.text = "BEST %d  •  %d RUNS" % [int(AppState.progress_for_game("mathtris").get("best_score", 0)), completed.size()]
 	progress_line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	progress_line.add_theme_font_size_override("font_size", 14)
 	progress_line.add_theme_color_override("font_color", Color("254b54"))

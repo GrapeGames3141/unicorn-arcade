@@ -41,8 +41,8 @@ func _process(delta: float) -> void:
 	if not active:
 		return
 	fall_accumulator += delta * 1000.0 * CompanionAbilityService.time_scale()
-	var elapsed := (Time.get_ticks_msec() - started_ms) / 1000
-	var interval := Rules.mathtris_drop_ms(level, drops_placed, elapsed) * (2 if Time.get_ticks_msec() < slow_until_ms else 1)
+	var elapsed := level_run.elapsed_ms() / 1000
+	var interval := Rules.mathtris_drop_ms(level, drops_placed, elapsed) * (2 if level_run.elapsed_ms() < slow_until_ms else 1)
 	if fall_accumulator >= interval:
 		fall_accumulator = 0.0
 		_step_falling()
@@ -159,7 +159,7 @@ func _seed_match_free_fallback(fill_rows: int) -> void:
 func _spawn_wave() -> void:
 	if not active:
 		return
-	var elapsed := (Time.get_ticks_msec() - started_ms) / 1000
+	var elapsed := level_run.elapsed_ms() / 1000
 	var wanted := Rules.mathtris_concurrent(elapsed, level)
 	var open: Array[int] = []
 	for col in COLS:
@@ -327,7 +327,6 @@ func _clear_matches(matches: Array[Dictionary], points_per_cell: int, allow_casc
 		board[hit.y][hit.x] = ""
 	score += hits.size() * points_per_cell
 	var cascade_anchors := _apply_gravity()
-	level = score / 700 + 1
 	if allow_cascade:
 		var cascade := _find_matches(cascade_anchors)
 		var guard := 0
@@ -339,6 +338,7 @@ func _clear_matches(matches: Array[Dictionary], points_per_cell: int, allow_casc
 			score += cascade_hits.size() * 175
 			cascade_anchors = _apply_gravity()
 			cascade = _find_matches(cascade_anchors)
+	level = score / 700 + 1
 
 
 func _apply_gravity() -> Array[Vector2i]:
@@ -421,7 +421,7 @@ func apply_companion_power(companion_id: String) -> bool:
 			_apply_gravity()
 			message_label.text = "Star cleared the fullest column!"
 		"cloud":
-			slow_until_ms = Time.get_ticks_msec() + 18000
+			slow_until_ms = level_run.elapsed_ms() + 18000
 			score += 50
 			message_label.text = "Cloud slowed falling tiles for 18 seconds!"
 		"dream":
@@ -622,10 +622,13 @@ func _cell_at(global_point: Vector2) -> Vector2i:
 
 
 func _game_over() -> void:
-	level_run.fail("Top out! Final score %d." % score)
+	if not active:
+		return
+	var previous_best := int(AppState.progress_for_game("mathtris").get("best_score", 0))
+	var reward := level_run.finish_endless(score, level)
 	active = level_run.active
 	falling.clear()
-	message_label.text = "Top out! Final score %d." % score
+	message_label.text = "%s\nSCORE %d  •  BEST %d  •  STAGE %d\n+%d coins" % ["NEW PERSONAL BEST!" if score > previous_best else "Nice run!", score, maxi(previous_best, score), level, reward]
 	action_button.text = "PLAY AGAIN"
 	action_button.show()
 	_refresh()
@@ -642,8 +645,9 @@ func retry_failure() -> void:
 
 
 func _advance_game() -> void:
-	if level_run.outcome == LevelRunController.Outcome.FAILURE:
-		retry_failure()
+	if not level_run.active:
+		level_run.retry()
+		_start_game_with_lifecycle(false)
 
 
 func _refresh() -> void:
@@ -662,7 +666,7 @@ func _refresh() -> void:
 			button.add_theme_color_override("font_color", Color("172143"))
 			button.add_theme_color_override("font_disabled_color", Color("172143") if value != "" else Color.TRANSPARENT)
 	hud_label.text = "SCORE %d    •    LEVEL %d" % [score, level]
-	next_label.text = "%d FALLING    •    %dms DROP" % [falling.size(), Rules.mathtris_drop_ms(level, drops_placed, (Time.get_ticks_msec() - started_ms) / 1000)]
+	next_label.text = "%d FALLING    •    %dms DROP" % [falling.size(), Rules.mathtris_drop_ms(level, drops_placed, level_run.elapsed_ms() / 1000)]
 
 
 func _tile_style(value: String, is_falling: bool, is_selected: bool, row: int = -1) -> StyleBoxFlat:

@@ -4,7 +4,7 @@ extends RefCounted
 const StorybookUI = preload("res://scripts/ui/storybook_ui.gd")
 
 
-func build_game_outcome(parent: Control, retry: bool, message: String) -> Dictionary:
+func build_game_outcome(parent: Control, retry: bool, message: String, endless := false) -> Dictionary:
 	var overlay := _modal_backdrop("GameOutcomeOverlay")
 	overlay.z_index = 1500
 	parent.add_child(overlay)
@@ -19,7 +19,7 @@ func build_game_outcome(parent: Control, retry: bool, message: String) -> Dictio
 	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	icon.add_theme_font_size_override("font_size", 46)
 	stack.add_child(icon)
-	var title := _modal_title("TRY AGAIN" if retry else "LEVEL COMPLETE!")
+	var title := _modal_title("RUN COMPLETE!" if endless else ("TRY AGAIN" if retry else "LEVEL COMPLETE!"))
 	title.add_theme_color_override("font_color", Color("ffb2cf") if retry else Color("bffff1"))
 	title.add_theme_font_size_override("font_size", 34)
 	stack.add_child(title)
@@ -33,7 +33,7 @@ func build_game_outcome(parent: Control, retry: bool, message: String) -> Dictio
 	stack.add_child(outcome_message)
 	var primary := Button.new()
 	primary.name = "GameOutcomePrimaryAction"
-	primary.text = "TRY AGAIN" if retry else "KEEP GOING"
+	primary.text = "PLAY AGAIN" if endless else ("TRY AGAIN" if retry else "KEEP GOING")
 	StorybookUI.apply_game_action(primary, 260)
 	stack.add_child(primary)
 	var category := Button.new()

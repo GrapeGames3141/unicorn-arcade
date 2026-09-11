@@ -12,6 +12,9 @@ var ended_ms := 0
 var outcome_message := ""
 var reward := 0
 var _completed := false
+var paused := false
+var _pause_started_ms := 0
+var _paused_ms := 0
 
 func begin(next_game_id: String, next_level_value: int) -> void:
 	game_id = next_game_id
@@ -24,10 +27,35 @@ func begin(next_game_id: String, next_level_value: int) -> void:
 	outcome_message = ""
 	reward = 0
 	_completed = false
+	paused = false
+	_pause_started_ms = 0
+	_paused_ms = 0
 	CompanionAbilityService.begin_level(game_id, level)
 
 func elapsed_ms() -> int:
-	return maxi(0, (Time.get_ticks_msec() if active else ended_ms) - started_ms)
+	var now := Time.get_ticks_msec() if active else ended_ms
+	var current_pause := maxi(0, now - _pause_started_ms) if paused else 0
+	return maxi(0, now - started_ms - _paused_ms - current_pause)
+
+func set_paused(value: bool) -> void:
+	if not active or value == paused:
+		return
+	if value:
+		_pause_started_ms = Time.get_ticks_msec()
+	else:
+		_paused_ms += maxi(0, Time.get_ticks_msec() - _pause_started_ms)
+	paused = value
+
+func finish_endless(score: int, stage: int) -> int:
+	if _completed or not active:
+		return reward
+	_completed = true
+	active = false
+	outcome = Outcome.SUCCESS
+	next_level = 1
+	ended_ms = Time.get_ticks_msec()
+	reward = AppState.complete_endless_run(game_id, score, stage, elapsed_ms())
+	return reward
 
 func complete() -> int:
 	if _completed or not active:

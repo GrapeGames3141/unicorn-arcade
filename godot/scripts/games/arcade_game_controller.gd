@@ -14,6 +14,40 @@ var _last_runtime_snapshot: Dictionary = {}
 var _last_active := false
 var _runtime_elapsed := 0.0
 var level_run := LevelRunController.new()
+var gameplay_paused := false
+var _pause_reasons: Dictionary = {}
+var _unpaused_process_mode: ProcessMode = Node.PROCESS_MODE_INHERIT
+
+
+func set_gameplay_paused(value: bool) -> void:
+	set_pause_reason(&"manual", value)
+
+
+func set_pause_reason(reason: StringName, value: bool) -> void:
+	if value:
+		_pause_reasons[reason] = true
+	else:
+		_pause_reasons.erase(reason)
+	var next_paused := not _pause_reasons.is_empty()
+	if next_paused == gameplay_paused:
+		return
+	gameplay_paused = next_paused
+	level_run.set_paused(gameplay_paused)
+	if gameplay_paused:
+		_unpaused_process_mode = process_mode
+		# Descendant timers, input handlers, and bound tweens stop together.
+		# Dialogs opt into ALWAYS so their buttons remain usable.
+		process_mode = Node.PROCESS_MODE_DISABLED
+	else:
+		process_mode = _unpaused_process_mode
+		publish_runtime_state()
+
+
+func pause_for_dialog(dialog: Control) -> void:
+	dialog.process_mode = Node.PROCESS_MODE_ALWAYS
+	var reason := StringName("dialog_%d" % dialog.get_instance_id())
+	set_pause_reason(reason, true)
+	dialog.tree_exited.connect(set_pause_reason.bind(reason, false), CONNECT_ONE_SHOT)
 
 
 func prepare_category_return() -> String:
@@ -45,6 +79,7 @@ func runtime_snapshot() -> Dictionary:
 		"game_id": id,
 		"level": level,
 		"active": active,
+		"paused": gameplay_paused,
 		"objective_primary": str(objective.get("primary", "YOUR MISSION")),
 		"objective_detail": str(objective.get("detail", "Complete the enchanted challenge.")),
 		"hint_available": can_show_hint(),
