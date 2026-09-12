@@ -405,6 +405,10 @@ func _run() -> void:
 	var first_root := first_live.display_rotation_root if is_instance_valid(first_live) else null
 	var first_authored_rug := first_live.find_child("AuthoredFurniture_rug", true, false) if is_instance_valid(first_live) else null
 	var second_live := second_button.get_node_or_null("RoomItemPreview3D") as RoomItemPreview3D
+	var furniture_deadline := Time.get_ticks_msec() + 10000
+	while (not first_live.model_ready or not second_live.model_ready) and Time.get_ticks_msec() < furniture_deadline:
+		await get_tree().process_frame
+	first_authored_rug = first_live.find_child("AuthoredFurniture_rug", true, false)
 	var first_viewport := first_live.get_node_or_null("SubViewport") as SubViewport if is_instance_valid(first_live) else null
 	_check(is_instance_valid(first_live) and is_instance_valid(second_live) and first_cached == null and first_live.animate_character == false and first_live.uses_authored_furniture_model and first_live.source_furniture_model_id == "store1:rug" and is_instance_valid(first_authored_rug) and is_instance_valid(first_viewport) and first_viewport.render_target_update_mode == SubViewport.UPDATE_ONCE, "visible room decor uses static authored 3D previews without CachedDecorPreview snapshots")
 	first_live.set_display_yaw(45.0)

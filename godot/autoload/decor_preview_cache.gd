@@ -96,13 +96,20 @@ func _render_next() -> void:
 		texture = _thumbnail_fallback(request_data.definition)
 		used_thumbnail_fallback = true
 	elif is_instance_valid(viewport):
-		for frame in 12:
+		# The initial render may contain only the contact shadow. Wait for asset
+		# completion before reading pixels, with a bounded fallback on slow loads.
+		var deadline := Time.get_ticks_msec() + 10000
+		while not preview.model_ready and Time.get_ticks_msec() < deadline:
 			await get_tree().process_frame
-			await RenderingServer.frame_post_draw
-			var image := viewport.get_texture().get_image()
-			if _has_visible_pixels(image):
-				texture = ImageTexture.create_from_image(image)
-				break
+		if preview.model_ready:
+			viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+			for frame in 12:
+				await get_tree().process_frame
+				await RenderingServer.frame_post_draw
+				var image := viewport.get_texture().get_image()
+				if _has_visible_pixels(image):
+					texture = ImageTexture.create_from_image(image)
+					break
 	if texture == null:
 		# A bounded readback can remain transparent before the preview is drawn.
 		# Keep its thumbnail visible rather than caching a blank texture.

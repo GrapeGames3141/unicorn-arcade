@@ -70,6 +70,9 @@ for scene in \
 	runtime_gameplay_correctness_integration \
 	runtime_polish_integration \
 	runtime_companion_polish_integration \
+	runtime_furniture_polish_integration \
+	store1_model_integration \
+	store_model_catalog_integration \
 	runtime_level_run_integration \
 	runtime_level_run_batch_two_integration \
 	runtime_level_run_batch_three_integration \

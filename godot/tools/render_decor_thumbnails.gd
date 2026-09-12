@@ -20,7 +20,17 @@ func _generate() -> void:
 		preview.size = Vector2(256, 256)
 		preview.setup(definition)
 		add_child(preview)
+		var deadline := Time.get_ticks_msec() + 10000
+		while not preview.model_ready and Time.get_ticks_msec() < deadline:
+			await get_tree().process_frame
+		if not preview.model_ready:
+			failures.append(item_id)
+			remove_child(preview)
+			preview.queue_free()
+			continue
 		await get_tree().process_frame
+		if DisplayServer.get_name() != "headless":
+			await RenderingServer.frame_post_draw
 		await get_tree().process_frame
 		await get_tree().process_frame
 		var viewport := preview.find_child("*", true, false) as SubViewport

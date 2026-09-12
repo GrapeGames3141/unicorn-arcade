@@ -22,6 +22,10 @@ var preview_viewport
 var display_yaw_degrees := 0.0
 var companion_builder: RoomCompanionPreviewBuilder
 var loading_portrait: TextureRect
+var model_ready := false
+var _furniture_loader: RoomAuthoredFurnitureLoader
+var _furniture_model: Node3D
+var _loading_furniture_art: TextureRect
 
 
 func _notification(what: int) -> void:
@@ -35,7 +39,7 @@ func setup(definition: Dictionary) -> void:
 	item_id = str(definition.get("id", definition.get("item_id", "decor")))
 	category = str(definition.get("category", "cozy"))
 	uses_character_model = item_id.begins_with("companion_") or category == "companions"
-	animate_character = bool(definition.get("animate", true))
+	animate_character = uses_character_model and bool(definition.get("animate", true))
 	presentation_context = str(definition.get("presentation", "room" if animate_character else "marketplace"))
 	stretch = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -45,6 +49,8 @@ func setup(definition: Dictionary) -> void:
 func _exit_tree() -> void:
 	if companion_builder != null:
 		companion_builder.cancel()
+	if _furniture_loader != null:
+		_furniture_loader.cancel()
 	if preview_viewport != null:
 		preview_viewport.shutdown()
 
@@ -91,6 +97,7 @@ func _build_companion(stage: Node3D) -> void:
 
 func _on_companion_mesh_count(count: int) -> void:
 	mesh_count = count
+	model_ready = true
 	if is_instance_valid(loading_portrait):
 		loading_portrait.queue_free()
 	loading_portrait = null
@@ -109,18 +116,43 @@ func _build_furniture(stage: Node3D) -> void:
 	model.rotation_degrees.y = -18.0
 	display_rotation_root.add_child(model)
 	_add_shadow(model)
-	var authored_result := RoomAuthoredFurnitureLoader.build(item_id, model)
-	uses_authored_furniture_model = bool(authored_result.get("built", false))
-	source_furniture_model_id = str(authored_result.get("source_model_id", ""))
-	if not uses_authored_furniture_model:
-		RoomProceduralFurnitureBuilder.new().build(model, item_id, category)
-	mesh_count = _count_meshes(model)
+	_furniture_model = model
+	_furniture_loader = RoomAuthoredFurnitureLoader.new()
+	if _furniture_loader.request(item_id, model, _on_furniture_loaded):
+		var path := "res://assets/store/decor_thumbnails/%s.png" % item_id
+		if ResourceLoader.exists(path):
+			_loading_furniture_art = TextureRect.new()
+			_loading_furniture_art.name = "FurnitureLoadingThumbnail"
+			_loading_furniture_art.texture = load(path) as Texture2D
+			_loading_furniture_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			_loading_furniture_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			_loading_furniture_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_loading_furniture_art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			add_child(_loading_furniture_art)
+	else:
+		_on_furniture_loaded({"built": false, "source_model_id": ""})
 	var camera := Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.size = 2.85
 	stage.add_child(camera)
 	camera.look_at_from_position(Vector3(3.7, 2.75, 4.8), Vector3(0.0, 0.62, 0.0), Vector3.UP)
 	camera.current = true
+
+
+func _on_furniture_loaded(result: Dictionary) -> void:
+	uses_authored_furniture_model = bool(result.get("built", false))
+	source_furniture_model_id = str(result.get("source_model_id", ""))
+	if not uses_authored_furniture_model:
+		RoomProceduralFurnitureBuilder.new().build(_furniture_model, item_id, category)
+	mesh_count = _count_meshes(_furniture_model)
+	model_ready = true
+	if is_instance_valid(_loading_furniture_art):
+		_loading_furniture_art.queue_free()
+	_loading_furniture_art = null
+	# Rotation may change during the load; the display root already holds the
+	# latest yaw. Render that yaw now rather than retaining the empty first frame.
+	if preview_viewport != null:
+		preview_viewport.request_redraw()
 
 
 func _add_shadow(parent: Node3D) -> void:

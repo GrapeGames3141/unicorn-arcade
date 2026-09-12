@@ -29,6 +29,14 @@ The first gameplay pass implements **B01–B05**. Their original findings remain
 - **Verification:** The added [`runtime_companion_polish_integration.gd`](../godot/tests/runtime_companion_polish_integration.gd) passes **20 checks**, including cold/warm loads, pending motion, fallback portraits, cancellation, continuous rendering, reduced motion, and late arrivals in inactive scenes. It is included in CI. Existing Home and room tests now wait for asynchronous models rather than assuming immediate instantiation; the meta and refactor suites pass their assertions. The refactor runner emits cleanup diagnostics at exit. One parallel Home headless run emitted a dummy-renderer texture error; an isolated rerun passed without diagnostics, so real-renderer/device validation remains necessary.
 - **Cloud geometry still open:** Blender and mesh-simplification tooling are absent from this workspace. Cloud has not been decimated, and none of the six character GLBs or textures have been changed. A01/A02 still require mesh editing and visual validation.
 
+### Third pass — furniture loading — September 12, 2026
+
+- **B07 loading implementation complete:** Room furniture previews now request model sheets through the shared threaded loader. Items from the same sheet share a load, show an existing catalog thumbnail while waiting, and preserve rotations chosen during loading. Canceled previews ignore late callbacks; failed loads use procedural fallback geometry. The synchronous builder remains available for offline callers.
+- **Static rendering:** Furniture renders on demand, including when callers omit the animation option. Loading, resizing, and rotation request fresh frames.
+- **Preview capture:** The decor cache and thumbnail generator wait for model readiness before capturing, with a bounded timeout. This prevents capturing the initial shadow-only viewport while the model is still loading. Rendered capture still needs visual verification; asset thumbnails have not been regenerated.
+- **Verification:** The new furniture regression suite passes **15 checks**. The companion suite passes **20 checks**, the original six furniture models pass, and the complete catalog verifies **107 authored models**. Catalog runners now use scenes so autoloads are available and are included in CI alongside the furniture suite. Existing meta and refactor checks pass their assertions; the refactor runner retains its previously observed exit-cleanup diagnostics.
+- **Still open:** B06 audio, character/furniture mesh and texture improvements, rendered review, and device measurements. Threaded resource loading does not remove main-thread scene instantiation cost; no frame-time or memory improvement is claimed without profiling.
+
 ## Start here
 
 1. Fix pause behavior, Mathtris progression, and Math Swipe input.
@@ -79,8 +87,9 @@ The first gameplay pass implements **B01–B05**. Their original findings remain
 
 ### B07 — P1 performance investigation: Animated character loads can block the main thread
 
-- [ ] Use the existing asynchronous asset loader consistently and show a lightweight placeholder while loading.
-- **Progress:** Completed for Home companions and room/game companion previews in the second pass above. Synchronous furniture loading and device measurements remain outstanding.
+- [x] Use the existing asynchronous asset loader consistently and show a lightweight placeholder while loading.
+- **Progress:** Implemented for Home companions, room/game companion previews, and furniture previews in the second and third passes above.
+- [ ] Measure cold-load frame stalls and memory on a lower-end device, including main-thread scene instantiation.
 - **Source finding:** [`room_companion_preview_builder.gd`](../godot/scripts/meta/room_companion_preview_builder.gd), `build()`, uses synchronous `ResourceLoader.load()` on a cache miss for animated companions; static companions use the asynchronous path. [`room_authored_furniture_loader.gd`](../godot/scripts/meta/room_authored_furniture_loader.gd) also synchronously loads and retains furniture scenes.
 - **Measured context:** Character GLBs range from approximately 34 to 64 MB on disk. This makes cold loads a concrete profiling target, although actual stall duration and runtime memory have not been measured here.
 - **Verify/fix completion:** Profile the first visit to Home, a room, and a game using each companion, plus first placement from each furniture sheet. Record frame stalls and memory on a lower-end Android device; loading must keep navigation responsive.

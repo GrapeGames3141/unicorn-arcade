@@ -1,11 +1,11 @@
-extends SceneTree
+extends Node
 
 const PreviewScene = preload("res://scripts/meta/room_item_preview_3d.gd")
 const Catalog = preload("res://scripts/meta_catalog.gd")
 const MODEL_CATALOG_PATH := "res://data/store_model_catalog.json"
 
 
-func _initialize() -> void:
+func _ready() -> void:
 	call_deferred("_run")
 
 
@@ -14,12 +14,12 @@ func _run() -> void:
 	var file := FileAccess.open(MODEL_CATALOG_PATH, FileAccess.READ)
 	if file == null:
 		push_error("Could not open the store model catalog")
-		quit(1)
+		get_tree().quit(1)
 		return
 	var parsed = JSON.parse_string(file.get_as_text())
 	if typeof(parsed) != TYPE_DICTIONARY:
 		push_error("Store model catalog is not valid JSON")
-		quit(1)
+		get_tree().quit(1)
 		return
 	var items: Dictionary = parsed.get("items", {})
 	if items.size() != 107:
@@ -45,9 +45,12 @@ func _run() -> void:
 			failures.append("%s is absent from the gameplay catalog" % item_id)
 			continue
 		var preview := PreviewScene.new()
-		root.add_child(preview)
+		add_child(preview)
 		preview.setup(catalog_definition)
-		await process_frame
+		await get_tree().process_frame
+		var deadline := Time.get_ticks_msec() + 10000
+		while not preview.model_ready and Time.get_ticks_msec() < deadline:
+			await get_tree().process_frame
 		if not preview.uses_authored_furniture_model:
 			failures.append("%s did not select its authored runtime model" % item_id)
 		if preview.find_child("AuthoredFurniture_%s" % item_id, true, false) == null:
@@ -58,16 +61,16 @@ func _run() -> void:
 	var missing: Array = parsed.get("missing_procedural_fallbacks", [])
 	for item_id in missing:
 		var preview := PreviewScene.new()
-		root.add_child(preview)
+		add_child(preview)
 		preview.setup(Catalog.furniture_item(str(item_id)))
-		await process_frame
+		await get_tree().process_frame
 		if preview.uses_authored_furniture_model:
 			failures.append("%s should still use its procedural fallback" % item_id)
 		preview.free()
 	if failures.is_empty():
 		print("STORE_MODEL_CATALOG_PASS: 107 authored models loaded; no procedural catalog fallbacks remain")
-		quit(0)
+		get_tree().quit(0)
 	else:
 		for failure in failures:
 			push_error(failure)
-		quit(1)
+		get_tree().quit(1)
