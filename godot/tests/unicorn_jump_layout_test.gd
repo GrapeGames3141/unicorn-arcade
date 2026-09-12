@@ -13,6 +13,8 @@ func _ready() -> void:
 func _run() -> void:
 	var jump = JumpScene.instantiate()
 	get_tree().root.add_child(jump)
+	var portrait = jump.companion_preview.loading_portrait
+	_check(is_instance_valid(portrait) and portrait.texture != null and portrait.texture.resource_path == CompanionAssets.thumbnail_path(AppState.equipped_companion()), "the starting stone immediately shows the equipped companion portrait while its model loads")
 	await get_tree().process_frame
 	await get_tree().process_frame
 
@@ -29,7 +31,13 @@ func _run() -> void:
 		first_five_centers_visible = first_five_centers_visible and view_rect.has_point(jump.node_buttons[index].get_global_rect().get_center())
 	_check(jump.world_viewport.zoom < 1.0 and first_five_centers_visible, "the initial camera frames the current stone and four forward stones while keeping pinch zoom available")
 	_check(not jump.world_viewport.pan.is_equal_approx(Vector2.ZERO), "the startup camera applies its initial focus instead of leaving the trail at zero pan")
-	_check(is_instance_valid(jump.companion_preview) and jump.companion_preview.animate_character and jump.companion_preview.mesh_count > 0 and jump.companion_preview.find_child("LiveUnicornModel", true, false) != null and jump.companion_preview.preview_viewport.viewport.render_target_update_mode == SubViewport.UPDATE_ALWAYS, "the current stone immediately displays the equipped unicorn through the live renderer")
+	# Threaded model loading can take longer than two frames on a cold CI worker.
+	# Keep the geometry/rendering assertions, but wait for the readiness contract.
+	var model_deadline := Time.get_ticks_msec() + 10000
+	while not jump.companion_preview.model_ready and Time.get_ticks_msec() < model_deadline:
+		await get_tree().create_timer(0.01).timeout
+	_check(jump.companion_preview.model_ready and jump.companion_preview.animate_character and jump.companion_preview.mesh_count > 0 and jump.companion_preview.find_child("LiveUnicornModel", true, false) != null and jump.companion_preview.preview_viewport.viewport.render_target_update_mode == SubViewport.UPDATE_ALWAYS, "the current stone displays the loaded equipped unicorn through the live renderer within ten seconds")
+	_check(jump.companion_preview.loading_portrait == null, "the loaded unicorn replaces its loading portrait")
 	_check(jump.find_children("ActiveCompanionOnStone", "", true, false).size() == 1 and jump.companion_preview.get_parent() == jump.world_viewport.world and jump.companion_preview.size == jump.COMPANION_DISPLAY_SIZE and jump.companion_preview.position.is_equal_approx(jump._companion_world_position(0)), "one full-size unicorn is positioned in trail-world coordinates on the starting stone")
 	if _supports_render_readback():
 		await RenderingServer.frame_post_draw

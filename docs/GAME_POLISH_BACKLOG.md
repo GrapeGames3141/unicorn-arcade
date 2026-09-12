@@ -37,6 +37,12 @@ The first gameplay pass implements **B01–B05**. Their original findings remain
 - **Verification:** The new furniture regression suite passes **15 checks**. The companion suite passes **20 checks**, the original six furniture models pass, and the complete catalog verifies **107 authored models**. Catalog runners now use scenes so autoloads are available and are included in CI alongside the furniture suite. Existing meta and refactor checks pass their assertions; the refactor runner retains its previously observed exit-cleanup diagnostics.
 - **Still open:** B06 audio, character/furniture mesh and texture improvements, rendered review, and device measurements. Threaded resource loading does not remove main-thread scene instantiation cost; no frame-time or memory improvement is claimed without profiling.
 
+### CI follow-up — asynchronous Unicorn Jump preview
+
+- The supplied CI run passed the gameplay, companion, furniture, and catalog suites but failed Unicorn Jump's old assertion that the live model must exist after two frames. That assumption is invalid for a cold threaded load.
+- The layout test now checks the equipped portrait immediately, waits up to ten seconds for model readiness, and then checks live geometry, continuous rendering, portrait replacement, and the existing jump/layout behavior. The focused headless runner passes with no diagnostics. A full CI rerun is still needed.
+- The supplied log's simulated save failure and ad initialization warnings are exercised failure-path tests. Resource/RID cleanup warnings in other runners remain unresolved and should be investigated separately.
+
 ## Start here
 
 1. Fix pause behavior, Mathtris progression, and Math Swipe input.
