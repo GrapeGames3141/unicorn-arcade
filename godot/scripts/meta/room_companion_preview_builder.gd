@@ -25,6 +25,8 @@ var presentation := "room"
 var mesh_count_callback: Callable
 var _request_generation := 0
 var _idle_animator: UnicornIdleAnimator
+var _motion_requested := false
+var _requested_walking := false
 
 
 func build(request_host: SubViewportContainer, rotation_root: Node3D, owner, requested_item_id: String, requested_animate: bool, requested_presentation: String, on_mesh_count: Callable) -> String:
@@ -46,22 +48,17 @@ func build(request_host: SubViewportContainer, rotation_root: Node3D, owner, req
 	var generation := _request_generation + 1
 	_request_generation = generation
 	var model_path := CompanionAssets.model_path(companion_id)
-	if animate:
-		var active_scene := RuntimeAssetLoader.cached_packed_scene(model_path)
-		if active_scene == null:
-			active_scene = ResourceLoader.load(model_path, "PackedScene") as PackedScene
-		if active_scene != null:
-			RuntimeAssetLoader.cache_packed_scene(model_path, active_scene)
-			_instantiate_companion(active_scene, companion_id, travel_root)
-	else:
-		RuntimeAssetLoader.load_packed_scene(model_path, func(packed_scene: PackedScene) -> void:
-			if generation != _request_generation or not is_instance_valid(travel_root) or packed_scene == null:
-				return
-			_instantiate_companion(packed_scene, companion_id, travel_root)
-		)
+	RuntimeAssetLoader.load_packed_scene(model_path, _finish_model_load.bind(generation, weakref(travel_root), companion_id))
 	_add_companion_shadow(travel_root)
 	_add_camera()
 	return companion_id
+
+
+func _finish_model_load(packed_scene: PackedScene, generation: int, target: WeakRef, companion_id: String) -> void:
+	var travel_root := target.get_ref() as Node3D
+	if generation != _request_generation or not is_instance_valid(travel_root) or not is_instance_valid(host) or host.is_queued_for_deletion() or packed_scene == null:
+		return
+	_instantiate_companion(packed_scene, companion_id, travel_root)
 
 
 func cancel() -> void:
@@ -69,6 +66,8 @@ func cancel() -> void:
 
 
 func set_motion_state(walking: bool) -> void:
+	_motion_requested = true
+	_requested_walking = walking
 	if is_instance_valid(_idle_animator):
 		_idle_animator.set_motion_state(walking)
 
@@ -112,6 +111,8 @@ func _instantiate_companion(packed_scene: PackedScene, companion_id: String, tra
 			elif presentation == "hero":
 				roam_radius = 0.85
 			_idle_animator.setup(travel_root, {"seed": "%s:%s" % [companion_id, presentation], "roam_radius": roam_radius})
+			if _motion_requested:
+				_idle_animator.set_motion_state(_requested_walking)
 	else:
 		_pose_companion(model)
 

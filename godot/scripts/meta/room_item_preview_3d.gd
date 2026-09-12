@@ -5,6 +5,7 @@ const RoomAuthoredFurnitureLoader = preload("res://scripts/meta/room_authored_fu
 const RoomProceduralFurnitureBuilder = preload("res://scripts/meta/room_procedural_furniture_builder.gd")
 const RoomCompanionPreviewBuilder = preload("res://scripts/meta/room_companion_preview_builder.gd")
 const RoomPreviewViewportScene = preload("res://scripts/meta/room_preview_viewport.gd")
+const CompanionAssets = preload("res://scripts/meta/companion_asset_catalog.gd")
 
 
 var item_id := ""
@@ -20,6 +21,7 @@ var display_rotation_root: Node3D
 var preview_viewport
 var display_yaw_degrees := 0.0
 var companion_builder: RoomCompanionPreviewBuilder
+var loading_portrait: TextureRect
 
 
 func _notification(what: int) -> void:
@@ -76,15 +78,29 @@ func _build_companion(stage: Node3D) -> void:
 	if companion_builder != null:
 		companion_builder.cancel()
 	companion_builder = RoomCompanionPreviewBuilder.new()
+	loading_portrait = TextureRect.new()
+	loading_portrait.name = "CompanionLoadingPortrait"
+	loading_portrait.texture = load(CompanionAssets.thumbnail_path(item_id.trim_prefix("companion_"))) as Texture2D
+	loading_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	loading_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	loading_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	loading_portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(loading_portrait)
 	source_model_id = companion_builder.build(self, display_rotation_root, preview_viewport, item_id, animate_character, presentation_context, _on_companion_mesh_count)
 
 
 func _on_companion_mesh_count(count: int) -> void:
 	mesh_count = count
+	if is_instance_valid(loading_portrait):
+		loading_portrait.queue_free()
+	loading_portrait = null
 	# Static companion models are loaded asynchronously. Their viewport may
 	# already have spent its one frame before the model joins the scene.
 	if preview_viewport != null:
-		preview_viewport.request_redraw()
+		if animate_character:
+			preview_viewport.viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+		else:
+			preview_viewport.request_redraw()
 
 
 func _build_furniture(stage: Node3D) -> void:

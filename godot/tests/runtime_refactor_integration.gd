@@ -22,12 +22,8 @@ const MathSwipe = preload("res://scripts/games/math_swipe.gd")
 const CometMathRescue = preload("res://scripts/games/comet_math_rescue.gd")
 const MoneyCounterBase = preload("res://scripts/games/money_counter_base.gd")
 
-class TutorialPauseProbe extends Control:
+class TutorialPauseProbe extends ArcadeGameController:
 	var level := 1
-	var pause_calls: Array[bool] = []
-
-	func set_gameplay_paused(value: bool) -> void:
-		pause_calls.append(value)
 
 var failures: Array[String] = []
 
@@ -98,13 +94,14 @@ func _run() -> void:
 	var galaxy_probe := TutorialPauseProbe.new()
 	add_child(galaxy_probe)
 	GameExperience.attached_scene = galaxy_probe
+	GameExperience.attached_controller = galaxy_probe
 	GameExperience.attached_game_id = "galaxy_unicorn"
 	GameExperience._maybe_show_tutorial(true)
 	var galaxy_tutorial := galaxy_probe.get_node_or_null("GuidedTutorialOverlay") as Control
-	_check(is_instance_valid(galaxy_tutorial) and galaxy_probe.pause_calls == [true], "GameExperience pauses Galaxy gameplay when mounting its tutorial overlay")
+	_check(is_instance_valid(galaxy_tutorial) and galaxy_probe.gameplay_paused and not galaxy_probe.can_process(), "GameExperience pauses Galaxy gameplay when mounting its tutorial overlay")
 	galaxy_tutorial.queue_free()
 	await get_tree().process_frame
-	_check(galaxy_probe.pause_calls == [true, false], "GameExperience unpauses Galaxy gameplay when its tutorial overlay exits")
+	_check(not galaxy_probe.gameplay_paused and galaxy_probe.can_process(), "GameExperience unpauses Galaxy gameplay when its tutorial overlay exits")
 	GameExperience.attached_scene = saved_tutorial_scene
 	GameExperience.attached_controller = saved_tutorial_controller
 	GameExperience.attached_game_id = saved_tutorial_game_id

@@ -31,6 +31,7 @@ func _run() -> void:
 	add_child(shell)
 	await shell.page_build_complete
 	await get_tree().process_frame
+	await _wait_for_meadow_models(shell)
 	_check(shell.get_child_count() >= 2, "navigation shell builds its full-screen page")
 	_check(_ui_is_accessible(shell), "navigation shell meets readable text, contrast, and touch-target minimums")
 	var meadow_stage := shell.find_child("MeadowCompanionStage3D", true, false)
@@ -134,6 +135,7 @@ func _run() -> void:
 	await shell.page_build_complete
 	await get_tree().process_frame
 	var returned_meadow := shell.find_child("MeadowCompanionStage3D", true, false) as MeadowCompanionStage3D
+	await _wait_for_meadow_models(shell)
 	_check(is_instance_valid(returned_meadow) and returned_meadow.get_instance_id() != meadow_stage_id and returned_meadow.viewport.render_target_update_mode == SubViewport.UPDATE_ALWAYS and shell.find_child("MeadowCompanionDisplay", true, false) != null and returned_meadow.find_children("LiveUnicornModel_*", "Node3D", true, false).size() == 6 and returned_meadow.find_children("*", "UnicornIdleAnimator", true, false).size() == 6 and returned_meadow.find_children("*", "SubViewport", true, false).size() == 1, "returning home builds a fresh active six-unicorn renderer and display")
 	await _release_shell(shell)
 	AppState.data["player"]["name"] = ""
@@ -170,6 +172,16 @@ func _run() -> void:
 		for failure in failures:
 			push_error(failure)
 		get_tree().quit(1)
+
+
+func _wait_for_meadow_models(shell: Node) -> void:
+	var deadline := Time.get_ticks_msec() + 10000
+	while Time.get_ticks_msec() < deadline:
+		var meadow := shell.find_child("MeadowCompanionStage3D", true, false)
+		if meadow != null and meadow.find_children("LiveUnicornModel_*", "Node3D", true, false).size() == 6:
+			return
+		await get_tree().create_timer(0.01).timeout
+	_check(false, "six meadow models complete their asynchronous loads")
 
 
 func _release_shell(shell: Node) -> void:

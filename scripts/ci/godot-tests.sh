@@ -69,6 +69,7 @@ for scene in \
 	runtime_marketplace_integration \
 	runtime_gameplay_correctness_integration \
 	runtime_polish_integration \
+	runtime_companion_polish_integration \
 	runtime_level_run_integration \
 	runtime_level_run_batch_two_integration \
 	runtime_level_run_batch_three_integration \

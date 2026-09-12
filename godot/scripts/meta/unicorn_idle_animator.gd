@@ -29,10 +29,15 @@ var max_idle_seconds := MAX_IDLE_SECONDS
 var walk_speed := WALK_SPEED
 var roam_2d := false
 var last_destination := Vector3.ZERO
+var _reduced_motion := false
+var _motion_override := -1
 
 
 func setup(target: Node3D, options: Dictionary = {}) -> void:
 	model = target
+	_reduced_motion = bool(AppState.setting("reduced_motion", false))
+	if not AppState.state_changed.is_connected(_sync_motion_preference):
+		AppState.state_changed.connect(_sync_motion_preference)
 	home_position = model.position
 	home_rotation_y = model.rotation.y
 	roam_radius = maxf(MIN_WALK_DISTANCE, float(options.get("roam_radius", DEFAULT_ROAM_RADIUS)))
@@ -81,7 +86,7 @@ func play_random_animation_now() -> void:
 
 
 func play_animation_now(requested: String) -> bool:
-	if requested.to_lower() != "walk" or walk_animation == &"":
+	if _reduced_motion or requested.to_lower() != "walk" or walk_animation == &"":
 		return false
 	if is_instance_valid(timer):
 		timer.stop()
@@ -90,18 +95,41 @@ func play_animation_now(requested: String) -> bool:
 
 
 func set_motion_state(walking: bool) -> void:
+	_motion_override = 1 if walking else 0
 	if not is_instance_valid(animation_player) or walk_animation == &"":
 		return
 	if is_instance_valid(timer):
 		timer.stop()
+		timer.autostart = false
 	_cancel_walk_journey()
-	if walking:
+	if walking and not _reduced_motion:
 		active_action = walk_animation
 		last_animation_name = "walk"
 		animation_player.play(walk_animation, 0.12)
 	else:
 		active_action = &""
 		_pose_standing()
+
+
+func _sync_motion_preference() -> void:
+	var reduced := bool(AppState.setting("reduced_motion", false))
+	if reduced == _reduced_motion:
+		return
+	_reduced_motion = reduced
+	if not is_instance_valid(animation_player):
+		return
+	if is_instance_valid(timer):
+		timer.stop()
+		# Setup can precede entering the tree; cancel that pending start too.
+		timer.autostart = false
+	_cancel_walk_journey()
+	active_action = &""
+	_pose_standing()
+	if not _reduced_motion:
+		if _motion_override >= 0:
+			set_motion_state(_motion_override == 1)
+		else:
+			_schedule_next()
 
 
 func _collect_animations() -> void:
@@ -112,7 +140,7 @@ func _collect_animations() -> void:
 
 
 func _start_walk() -> void:
-	if not is_instance_valid(animation_player) or walk_animation == &"":
+	if _reduced_motion or not is_instance_valid(animation_player) or walk_animation == &"":
 		return
 	_cancel_walk_journey()
 	active_action = walk_animation
@@ -197,7 +225,7 @@ func _pose_standing() -> void:
 
 
 func _schedule_next() -> void:
-	if not is_instance_valid(timer):
+	if _reduced_motion or not is_instance_valid(timer):
 		return
 	next_delay_seconds = rng.randf_range(min_idle_seconds, max_idle_seconds)
 	timer.wait_time = next_delay_seconds

@@ -20,6 +20,15 @@ The first gameplay pass implements **B01–B05**. Their original findings remain
 - **Environment:** Implementation testing uses installed Linux Godot **4.7.1.stable.official.a13da4feb**, matching the prescribed Windows engine version. Logs and disposable Linux test data are under git-ignored `.tools/`. This is automated headless testing, not a physical-device or rendered art approval.
 - **Still open:** B06/B07, all 3D model tasks, the broader design improvements, and physical-device verification. No 3D meshes or textures have been modified in this pass.
 
+### Second pass — companion loading and presentation
+
+- **B07, companion portion implemented:** Home's six unicorns and animated room/game previews now use the shared threaded loader. Room/game previews display the existing portrait while loading and retain it if loading fails. Cached callbacks remain deferred; weak references and cancellation prevent late loads from populating departed pages. Furniture loading and device profiling remain open.
+- **Animation rendering fixed:** A loaded animated companion previously triggered `request_redraw()`, switching its viewport from continuous rendering to a single frame. Animated companions now retain `UPDATE_ALWAYS`; static previews still render on demand. Movement requested before the model arrives is applied after loading.
+- **Reduced motion:** Companion animators stop optional roaming and walking when the setting is enabled, including in Home. Turning the setting off restores either automatic roaming or the explicitly requested motion. Retired meadow viewports stop processing as well as rendering.
+- **Contact shadows:** Meadow shadow meshes now have a dark translucent material and do not cast a second shadow; previously they used the default opaque material. This material change still needs rendered/device review.
+- **Verification:** The added [`runtime_companion_polish_integration.gd`](../godot/tests/runtime_companion_polish_integration.gd) passes **20 checks**, including cold/warm loads, pending motion, fallback portraits, cancellation, continuous rendering, reduced motion, and late arrivals in inactive scenes. It is included in CI. Existing Home and room tests now wait for asynchronous models rather than assuming immediate instantiation; the meta and refactor suites pass their assertions. The refactor runner emits cleanup diagnostics at exit. One parallel Home headless run emitted a dummy-renderer texture error; an isolated rerun passed without diagnostics, so real-renderer/device validation remains necessary.
+- **Cloud geometry still open:** Blender and mesh-simplification tooling are absent from this workspace. Cloud has not been decimated, and none of the six character GLBs or textures have been changed. A01/A02 still require mesh editing and visual validation.
+
 ## Start here
 
 1. Fix pause behavior, Mathtris progression, and Math Swipe input.
@@ -71,6 +80,7 @@ The first gameplay pass implements **B01–B05**. Their original findings remain
 ### B07 — P1 performance investigation: Animated character loads can block the main thread
 
 - [ ] Use the existing asynchronous asset loader consistently and show a lightweight placeholder while loading.
+- **Progress:** Completed for Home companions and room/game companion previews in the second pass above. Synchronous furniture loading and device measurements remain outstanding.
 - **Source finding:** [`room_companion_preview_builder.gd`](../godot/scripts/meta/room_companion_preview_builder.gd), `build()`, uses synchronous `ResourceLoader.load()` on a cache miss for animated companions; static companions use the asynchronous path. [`room_authored_furniture_loader.gd`](../godot/scripts/meta/room_authored_furniture_loader.gd) also synchronously loads and retains furniture scenes.
 - **Measured context:** Character GLBs range from approximately 34 to 64 MB on disk. This makes cold loads a concrete profiling target, although actual stall duration and runtime memory have not been measured here.
 - **Verify/fix completion:** Profile the first visit to Home, a room, and a game using each companion, plus first placement from each furniture sheet. Record frame stalls and memory on a lower-end Android device; loading must keep navigation responsive.

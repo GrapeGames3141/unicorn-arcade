@@ -249,6 +249,10 @@ func _meta_suite() -> void:
 	var room: Node = await _mount(ROOM_SCENE)
 	await get_tree().process_frame
 	var actor: Node = room.roaming_actor
+	var load_deadline := Time.get_ticks_msec() + 10000
+	while actor.find_child("LiveUnicornModel", true, false) == null and Time.get_ticks_msec() < load_deadline:
+		await get_tree().create_timer(0.01).timeout
+	_check(actor.find_child("LiveUnicornModel", true, false) != null, "room companion completes its asynchronous model load")
 	var start: Vector2 = actor.position
 	room.roam_target = start + Vector2(60, 0)
 	room.roam_pause = 4.0

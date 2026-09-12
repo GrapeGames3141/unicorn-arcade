@@ -8,9 +8,12 @@ const HERO_SCALE_MULTIPLIER := 3.8
 const HERO_SHADOW_RADIUS := 0.84
 
 var viewport: SubViewport
+var _generation := 0
+var _active := true
 
 
 func setup(equipped_id: String, companion_ids: Array) -> void:
+	_generation += 1
 	viewport = SubViewport.new()
 	viewport.name = "MeadowSharedViewport"
 	viewport.size = Vector2i(720, 420)
@@ -61,10 +64,18 @@ func _add_companion(stage: Node3D, id: String, position: Vector3, hero: bool, fo
 	var behavior := _behavior_options(id, hero, formation_slot)
 	root.set_meta("roam_behavior_signature", "%s|%.2f|%.2f|%.2f|%.2f|%.2f" % [id, behavior["walk_speed"], behavior["roam_radius_x"], behavior["roam_radius_z"], behavior["min_idle_seconds"], behavior["max_idle_seconds"]])
 	stage.add_child(root)
-	var packed_scene := load(CompanionAssets.model_path(id)) as PackedScene
+	RuntimeAssetLoader.load_packed_scene(CompanionAssets.model_path(id), _finish_companion_load.bind(weakref(root), id, hero, behavior, _generation))
+
+
+func _finish_companion_load(packed_scene: PackedScene, target: WeakRef, id: String, hero: bool, behavior: Dictionary, generation: int) -> void:
+	var root := target.get_ref() as Node3D
+	if generation != _generation or not is_instance_valid(root):
+		return
 	if packed_scene == null:
 		return
 	var model := packed_scene.instantiate() as Node3D
+	if model == null:
+		return
 	model.name = "LiveUnicornModel_%s" % id
 	model.scale = Vector3.ONE * CompanionAssets.scale_for(id) * (HERO_SCALE_MULTIPLIER if hero else 1.7)
 	model.position.y = -0.25
@@ -75,14 +86,21 @@ func _add_companion(stage: Node3D, id: String, position: Vector3, hero: bool, fo
 	mesh.top_radius = HERO_SHADOW_RADIUS if hero else 0.42
 	mesh.bottom_radius = mesh.top_radius
 	mesh.height = 0.02
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.12, 0.10, 0.24, 0.20)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mesh.material = material
 	shadow.mesh = mesh
+	shadow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	shadow.position = Vector3(0.0, 0.02, -0.06)
 	shadow.scale.z = 0.55
 	root.add_child(shadow)
 	var animator := IdleAnimator.new()
 	animator.name = "IdleAnimator"
-	stage.add_child(animator)
+	root.get_parent().add_child(animator)
 	animator.setup(root, behavior)
+	animator.process_mode = Node.PROCESS_MODE_INHERIT if _active else Node.PROCESS_MODE_DISABLED
 
 
 func _behavior_options(id: String, hero: bool, formation_slot: int) -> Dictionary:
@@ -116,12 +134,15 @@ func _add_lights(stage: Node3D) -> void:
 
 
 func set_active(active: bool) -> void:
+	_active = active
 	if is_instance_valid(viewport):
 		viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if active else SubViewport.UPDATE_DISABLED
+		viewport.process_mode = Node.PROCESS_MODE_INHERIT if active else Node.PROCESS_MODE_DISABLED
 	for animator in find_children("*", "UnicornIdleAnimator", true, false):
 		animator.process_mode = Node.PROCESS_MODE_INHERIT if active else Node.PROCESS_MODE_DISABLED
 
 
 func _exit_tree() -> void:
+	_generation += 1
 	if is_instance_valid(viewport):
 		viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
