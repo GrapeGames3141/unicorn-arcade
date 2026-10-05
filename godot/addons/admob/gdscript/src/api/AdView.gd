@@ -54,7 +54,10 @@ func _init(ad_unit_id: String, ad_size: AdSize, ad_position: AdPosition) -> void
 		safe_connect(_plugin, "on_ad_impression", _on_ad_impression)
 		safe_connect(_plugin, "on_ad_loaded", _on_ad_loaded)
 		safe_connect(_plugin, "on_ad_opened", _on_ad_opened)
-		safe_connect(_plugin, "on_ad_view_paid", _on_ad_view_paid)
+		# The certified Android v4.3.1 backend has the same banner API, but
+		# does not expose the v5 revenue signal. Other backends still may.
+		if _plugin.has_signal("on_ad_view_paid"):
+			safe_connect(_plugin, "on_ad_view_paid", _on_ad_view_paid)
 
 
 func load_ad(ad_request: AdRequest) -> void:

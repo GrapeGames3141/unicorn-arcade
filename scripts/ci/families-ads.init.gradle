@@ -1,0 +1,32 @@
+// Validate the graph used by the actual Godot Android export, before packaging.
+gradle.projectsEvaluated {
+    allprojects { p ->
+        if (p.plugins.hasPlugin('com.android.application') &&
+            p.rootDir.canonicalPath.replace('\\', '/').endsWith('/android/build')) {
+            def verify = p.tasks.register('verifyUnicornFamiliesAds') {
+                doLast {
+                    ['releaseRuntimeClasspath', 'debugRuntimeClasspath'].each { name ->
+                        def modules = p.configurations.getByName(name).resolvedConfiguration.resolvedArtifacts
+                            .collect { it.moduleVersion.id.toString() }.unique().sort()
+                        if (!modules.contains('com.google.android.gms:play-services-ads:24.9.0')) {
+                            throw new GradleException("Families SDK missing or substituted in ${name}")
+                        }
+                        if (modules.any { it.startsWith('com.google.android.libraries.ads.mobile.sdk:') ||
+                            it.startsWith('com.google.ads.mediation:') }) {
+                            throw new GradleException("Unapproved Next-Gen or mediation SDK in ${name}")
+                        }
+                        def evidence = System.getenv('UNICORN_ADS_EVIDENCE_DIR')
+                        if (evidence) {
+                            def file = new File(evidence, "${name}.txt")
+                            file.parentFile.mkdirs()
+                            file.text = modules.join('\n') + '\n'
+                        }
+                        println "CHILD_ADS_DEPENDENCIES_OK ${name}: play-services-ads:24.9.0; no Next-Gen or mediation"
+                    }
+                }
+            }
+            p.tasks.matching { it.name.startsWith('assemble') || it.name.startsWith('bundle') }
+                .configureEach { dependsOn(verify) }
+        }
+    }
+}

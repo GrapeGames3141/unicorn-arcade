@@ -98,12 +98,12 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
-      # Poing AdMob AARs are gitignored; CI downloads android-template-v${GODOT_VERSION}.zip
+      # Pinned legacy Android backend: Families-listed play-services-ads, no Next-Gen.
       - name: Cache AdMob Android binaries
         uses: actions/cache@v4
         with:
           path: ~/.cache/unicorn-arcade/admob
-          key: admob-android-${{ env.GODOT_VERSION }}-v5.0.0
+          key: admob-android-${{ env.GODOT_VERSION }}-v4.3.1-families-b2429ce2
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -188,6 +188,14 @@ jobs:
           name: UnicornArcade-debug-apk
           path: godot/build/android/UnicornArcade-debug.apk
           if-no-files-found: error
+
+      - name: Upload Families SDK verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: UnicornArcade-ads-evidence
+          path: godot/build/android/ads-evidence/
+          if-no-files-found: warn
 
       - name: Keep only the last 3 debug APK artifacts
         uses: actions/github-script@v7
