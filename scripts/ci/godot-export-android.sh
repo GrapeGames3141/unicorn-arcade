@@ -411,7 +411,7 @@ export_android() {
 	validate_artifact "$PROJECT/build/android/UnicornArcade-debug.apk" "$DEBUG_PACKAGE_NAME" "$VERSION_CODE" "${VERSION_NAME:-1.${VERSION_CODE}}"
 	# Missing reports mean the Gradle hook did not run; never accept that as a
 	# successful SDK verification even if packaging itself succeeded.
-	for graph in releaseRuntimeClasspath debugRuntimeClasspath; do
+	for graph in standardReleaseRuntimeClasspath standardDebugRuntimeClasspath; do
 		local report="$UNICORN_ADS_EVIDENCE_DIR/$graph.txt"
 		if [[ ! -s "$report" ]] || ! grep -Fxq 'com.google.android.gms:play-services-ads:24.9.0' "$report"; then
 			echo "ERROR: Missing verified Families dependency graph: $graph" >&2

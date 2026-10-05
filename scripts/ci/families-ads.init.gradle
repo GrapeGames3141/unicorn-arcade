@@ -5,7 +5,7 @@ gradle.projectsEvaluated {
             p.rootDir.canonicalPath.replace('\\', '/').endsWith('/android/build')) {
             def verify = p.tasks.register('verifyUnicornFamiliesAds') {
                 doLast {
-                    ['releaseRuntimeClasspath', 'debugRuntimeClasspath'].each { name ->
+                    ['standardReleaseRuntimeClasspath', 'standardDebugRuntimeClasspath'].each { name ->
                         def modules = p.configurations.getByName(name).resolvedConfiguration.resolvedArtifacts
                             .collect { it.moduleVersion.id.toString() }.unique().sort()
                         if (!modules.contains('com.google.android.gms:play-services-ads:24.9.0')) {
