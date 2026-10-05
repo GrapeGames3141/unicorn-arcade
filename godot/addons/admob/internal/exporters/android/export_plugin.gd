@@ -36,7 +36,8 @@ func _supports_platform(platform: EditorExportPlatform) -> bool:
 
 
 func _get_enabled_libs_list() -> Array[String]:
-	return _discover_enabled_libs(Library.ROOT_BIN_PATH)
+	# This child-only app ships AdMob banners only, never mediated networks.
+	return ["ads"]
 
 
 func _get_plugins() -> Array[EditorExportPlugin]:
@@ -157,7 +158,8 @@ func _get_android_manifest_application_element_contents(
 func _export_begin(_features: PackedStringArray, _is_debug: bool, _path: String, _flags: int) -> void:
 	if not _features.has("android"):
 		return
-	PluginVersion.check_version_mismatch(PluginVersion.android_version, "Android")
+	if PluginVersion.android_version != "v4.3.1":
+		push_error("Unicorn Arcade requires the pinned Families-listed Android v4.3.1 backend. Run scripts/ci/godot-export-android.sh.")
 	_patch_android_gradle_file()
 
 
@@ -172,17 +174,16 @@ func _patch_android_gradle_file() -> void:
 	if content.is_empty():
 		return
 
-	if 'exclude group: "com.google.android.gms", module: "play-services-ads"' in content:
-		return
-
-	var patch := """
-// Added by Poing Godot AdMob Plugin to support GMA Next-Gen SDK
+	# Remove the old Next-Gen exclusion from a restored Android template cache.
+	var old_patch := """// Added by Poing Godot AdMob Plugin to support GMA Next-Gen SDK
 configurations.configureEach {
     exclude group: "com.google.android.gms", module: "play-services-ads"
     exclude group: "com.google.android.gms", module: "play-services-ads-lite"
 }
 """
-	content += patch
+	if not content.contains(old_patch):
+		return
+	content = content.replace(old_patch, "")
 
 	var file := FileAccess.open(gradle_path, FileAccess.WRITE)
 	if file:

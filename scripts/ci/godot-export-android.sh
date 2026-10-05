@@ -73,7 +73,7 @@ write_admob_config() {
   "android_app_id": "ca-app-pub-2846735043546429~3696195593",
   "android_banner_unit_id": "${banner}",
   "child_directed": true,
-  "tag_for_under_age_of_consent": true,
+  "tag_for_under_age_of_consent": false,
   "max_ad_content_rating": "G",
   "show_on_login": false,
   "banner_height_dp": 60
@@ -84,31 +84,35 @@ EOF
 # Poing AdMob AARs live under addons/admob/android/bin (gitignored). Without them,
 # Godot export skips the native plugin and device builds never show banners.
 install_admob_android_binaries() {
-	local plugin_version="${ADMOB_PLUGIN_VERSION:-v5.0.0}"
-	local godot_tag="v${GODOT_VERSION}"
-	local zip_name="android-template-${godot_tag}.zip"
+	# v5's Next-Gen artifact is not on Google's Families self-certified list.
+	# Keep the v5 GDScript banner API with its compatible v4.3.1 Android backend.
+	local plugin_version="v4.3.1"
+	[[ "$GODOT_VERSION" == "4.7.1" ]] || { echo "ERROR: Families backend is verified for Godot 4.7.1 only" >&2; exit 1; }
+	local zip_name="poing-godot-admob-android-v${GODOT_VERSION}.zip"
+	local expected_sha="b2429ce2f10c06bec55d3de5273eec6942e4129cf64fccf730d865b5e7d0bfb6"
 	local url="https://github.com/poingstudios/godot-admob-plugin/releases/download/${plugin_version}/${zip_name}"
-	local cache="${ADMOB_CACHE_DIR:-$HOME/.cache/unicorn-arcade/admob}"
+	local cache="${ADMOB_CACHE_DIR:-$HOME/.cache/unicorn-arcade/admob}/$plugin_version"
 	local bin_dir="$PROJECT/addons/admob/android/bin"
 	local marker="$bin_dir/ads/libs/poing-godot-admob-ads-release.aar"
-
-	if [[ -f "$marker" && -f "$bin_dir/package.gd" ]]; then
-		echo "AdMob Android binaries already present ($(du -sh "$bin_dir" | cut -f1))"
-		return 0
-	fi
 
 	mkdir -p "$cache" "$bin_dir"
 	if [[ ! -f "$cache/$zip_name" ]]; then
 		echo "Downloading AdMob Android template ${zip_name} (${plugin_version})..."
 		curl -fsSL -o "$cache/$zip_name" "$url"
 	fi
+	printf '%s  %s\n' "$expected_sha" "$cache/$zip_name" | sha256sum --check --status || {
+		echo "ERROR: Families AdMob Android archive checksum mismatch" >&2; exit 1;
+	}
 	echo "Extracting AdMob Android binaries into $bin_dir..."
-	unzip -qo "$cache/$zip_name" -d "$bin_dir"
+	# Do not install the optional third-party mediation libraries.
+	unzip -qo "$cache/$zip_name" 'ads/*' 'package.gd' -d "$bin_dir"
 	if [[ ! -f "$marker" || ! -f "$bin_dir/package.gd" ]]; then
 		echo "ERROR: AdMob Android binaries missing after extract (expected $marker)" >&2
 		exit 1
 	fi
-	echo "AdMob Android binaries installed ($(du -sh "$bin_dir" | cut -f1))"
+	mkdir -p "$PROJECT/build/android/ads-evidence"
+	python3 "$ROOT/scripts/ci/verify-family-ads.py" "$bin_dir" | tee "$PROJECT/build/android/ads-evidence/native-backend.txt"
+	echo "Families AdMob Android backend installed (${plugin_version}, play-services-ads 24.9.0)"
 }
 
 # Match main Capacitor CI: versionCode = run number, versionName = "1.<run_number>".
@@ -363,6 +367,12 @@ export_android() {
 	cp "$PRESET_PATH" "$PRESET_BACKUP"
 	trap restore_export_preset EXIT
 	install_admob_android_binaries
+	# Runs inside the actual export's Gradle invocation, with Godot's resolved
+	# plugin arguments. A separate `gradle dependencies` command would omit them.
+	local gradle_home="${GRADLE_USER_HOME:-$HOME/.gradle}"
+	mkdir -p "$gradle_home/init.d"
+	cp "$ROOT/scripts/ci/families-ads.init.gradle" "$gradle_home/init.d/unicorn-families-ads.gradle"
+	export UNICORN_ADS_EVIDENCE_DIR="$PROJECT/build/android/ads-evidence"
 	local release_banner="${ADMOB_RELEASE_BANNER_UNIT_ID:-${ADMOB_BANNER_UNIT_ID:-$GOOGLE_TEST_BANNER_UNIT_ID}}"
 	local debug_banner="${ADMOB_DEBUG_BANNER_UNIT_ID:-$GOOGLE_TEST_BANNER_UNIT_ID}"
 	write_admob_config "$release_banner"
@@ -399,6 +409,15 @@ export_android() {
 	godot --headless --path "$PROJECT" --verbose \
 		--export-debug "$EXPORT_PRESET" "$PROJECT/build/android/UnicornArcade-debug.apk"
 	validate_artifact "$PROJECT/build/android/UnicornArcade-debug.apk" "$DEBUG_PACKAGE_NAME" "$VERSION_CODE" "${VERSION_NAME:-1.${VERSION_CODE}}"
+	# Missing reports mean the Gradle hook did not run; never accept that as a
+	# successful SDK verification even if packaging itself succeeded.
+	for graph in standardReleaseRuntimeClasspath standardDebugRuntimeClasspath; do
+		local report="$UNICORN_ADS_EVIDENCE_DIR/$graph.txt"
+		if [[ ! -s "$report" ]] || ! grep -Fxq 'com.google.android.gms:play-services-ads:24.9.0' "$report"; then
+			echo "ERROR: Missing verified Families dependency graph: $graph" >&2
+			exit 1
+		fi
+	done
 	set_export_format 1
 	sed -i 's|^export_path=.*|export_path="build/android/UnicornArcade.aab"|' "$preset"
 	restore_export_preset

@@ -44,6 +44,7 @@ bootstrap_godot_project
 
 # Keep this manifest explicit: new scene suites must be deliberately added to CI.
 run_godot_test "App-owned GDScript parse smoke" res://tests/parse_app_scripts.tscn
+run_godot_test "Child-directed native targeting contract" res://tests/child_ads_policy_test.tscn
 run_godot_test "Parity rule tests" --script res://tests/run_tests.gd
 run_godot_test "PR31 project-aware dead-code audit" res://tests/dead_code_audit_pr31.tscn
 

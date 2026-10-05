@@ -4,7 +4,7 @@
   "android_app_id": "ca-app-pub-2846735043546429~3696195593",
   "android_banner_unit_id": "ca-app-pub-3940256099942544/6300978111",
   "child_directed": true,
-  "tag_for_under_age_of_consent": true,
+  "tag_for_under_age_of_consent": false,
   "max_ad_content_rating": "G",
   "show_on_login": false,
   "banner_height_dp": 60

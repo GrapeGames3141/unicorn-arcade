@@ -5,6 +5,7 @@ extends Node
 
 const CONFIG_PATH := "res://config/admob.json"
 const EXAMPLE_PATH := "res://config/admob.example.json"
+const ChildAdsPolicy := preload("res://scripts/platform/child_ads_policy.gd")
 const GOOGLE_TEST_BANNER_UNIT_ID := "ca-app-pub-3940256099942544/6300978111"
 const CONTENT_TO_BANNER_GUTTER_LOGICAL_PIXELS := 24
 const BANNER_REQUEST_STALE_MS := 8000
@@ -92,7 +93,7 @@ func config() -> Dictionary:
 
 
 func ads_enabled() -> bool:
-	return bool(_config.get("ads_enabled", false))
+	return bool(_config.get("ads_enabled", false)) and ChildAdsPolicy.permits_ads(_config)
 
 
 func banner_height() -> float:
@@ -172,33 +173,16 @@ func _initialize_mobile_ads(now_ms := -1) -> void:
 		)
 		return
 
-	var request_config := RequestConfiguration.new()
-	if bool(_config.get("child_directed", true)):
-		request_config.tag_for_child_directed_treatment = (
-			RequestConfiguration.TagForChildDirectedTreatment.TRUE
-		)
-	if bool(_config.get("tag_for_under_age_of_consent", true)):
-		request_config.tag_for_under_age_of_consent = (
-			RequestConfiguration.TagForUnderAgeOfConsent.TRUE
-		)
-	var rating := str(_config.get("max_ad_content_rating", "G"))
-	match rating:
-		"PG":
-			request_config.max_ad_content_rating = RequestConfiguration.MAX_AD_CONTENT_RATING_PG
-		"T":
-			request_config.max_ad_content_rating = RequestConfiguration.MAX_AD_CONTENT_RATING_T
-		"MA":
-			request_config.max_ad_content_rating = RequestConfiguration.MAX_AD_CONTENT_RATING_MA
-		_:
-			request_config.max_ad_content_rating = RequestConfiguration.MAX_AD_CONTENT_RATING_G
-
-	MobileAds.set_request_configuration(request_config)
+	if not ChildAdsPolicy.permits_ads(_config):
+		_invalidate_sdk_initialization()
+		push_warning("AdBarService: ads disabled because configuration conflicts with child-directed G policy")
+		return
 
 	var listener := OnInitializationCompleteListener.new()
 	listener.on_initialization_complete = func(_status: InitializationStatus) -> void:
 		_on_mobile_ads_initialized(generation)
 
-	MobileAds.initialize(listener)
+	MobileAds.initialize(listener, ChildAdsPolicy.request_configuration())
 
 
 func _can_begin_sdk_initialization(now_ms := -1) -> bool:

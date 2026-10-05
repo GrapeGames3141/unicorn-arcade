@@ -28,14 +28,10 @@ const InstallerService := preload("res://addons/admob/internal/services/installe
 
 
 static func install_missing_binaries_sync() -> void:
-	if DisplayServer.get_name() != "headless":
-		return
-
-	if not PluginVersion.is_android_installed:
-		_install_android_sync()
-
-	if not PluginVersion.is_ios_installed:
-		_install_ios_sync()
+	# Unicorn Arcade installs its checksum-pinned Families Android backend in
+	# scripts/ci/godot-export-android.sh. An editor import must not silently
+	# download the v5 Next-Gen backend or unrelated iOS binaries.
+	return
 
 
 static func _install_android_sync() -> void:

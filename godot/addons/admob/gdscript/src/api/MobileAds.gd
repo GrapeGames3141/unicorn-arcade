@@ -30,16 +30,20 @@ static var _current_on_ad_inspector_closed_listener: AdInspectorClosedListener =
 
 
 static func initialize(
-	on_initialization_complete_listener: OnInitializationCompleteListener = null
+	on_initialization_complete_listener: OnInitializationCompleteListener = null,
+	request_configuration: RequestConfiguration = null
 ) -> void:
 	if _plugin:
-		_plugin.initialize()
-
+		# Android uses the pinned Families-listed legacy SDK backend. Its global
+		# targeting must be applied before initialize, including the first request.
+		if request_configuration != null:
+			set_request_configuration(request_configuration)
 		if on_initialization_complete_listener:
 			_current_on_initialization_complete_listener = on_initialization_complete_listener
 			safe_connect(
 				_plugin, "on_initialization_complete", _on_initialization_complete, CONNECT_ONE_SHOT
 			)
+		_plugin.initialize()
 
 
 static func set_request_configuration(request_configuration: RequestConfiguration) -> void:
