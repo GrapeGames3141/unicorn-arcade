@@ -409,6 +409,15 @@ export_android() {
 	godot --headless --path "$PROJECT" --verbose \
 		--export-debug "$EXPORT_PRESET" "$PROJECT/build/android/UnicornArcade-debug.apk"
 	validate_artifact "$PROJECT/build/android/UnicornArcade-debug.apk" "$DEBUG_PACKAGE_NAME" "$VERSION_CODE" "${VERSION_NAME:-1.${VERSION_CODE}}"
+	# Missing reports mean the Gradle hook did not run; never accept that as a
+	# successful SDK verification even if packaging itself succeeded.
+	for graph in releaseRuntimeClasspath debugRuntimeClasspath; do
+		local report="$UNICORN_ADS_EVIDENCE_DIR/$graph.txt"
+		if [[ ! -s "$report" ]] || ! grep -Fxq 'com.google.android.gms:play-services-ads:24.9.0' "$report"; then
+			echo "ERROR: Missing verified Families dependency graph: $graph" >&2
+			exit 1
+		fi
+	done
 	set_export_format 1
 	sed -i 's|^export_path=.*|export_path="build/android/UnicornArcade.aab"|' "$preset"
 	restore_export_preset
