@@ -12,6 +12,12 @@ const CYAN := Color("58d6e8")
 const PLUM := Color("3c183d")
 const MUTED := Color("c9d3ef")
 const UNICORN_HOUSE_HOME_ICON_PATH := "res://assets/ui/unicorn_house_home_v1.png"
+const MEADOW_BACKGROUND_PATH := "res://assets/meta/environments/magical_meadow_v1.png"
+## One shared "meadow at dusk" backdrop keeps menus, shop, rooms, and games in
+## the same world as the Home meadow while leaving cream text readable.
+const DUSK_WASH := Color("1a1447")
+const DUSK_MEADOW_ALPHA := 0.58
+const DUSK_VEIL := Color(0.09, 0.06, 0.26, 0.36)
 
 
 static func apply_button(button: BaseButton, fill: Color = NAVY, dark_text: bool = false, radius: int = 14) -> void:
@@ -35,7 +41,9 @@ static func apply_game_action(button: BaseButton, minimum_width: float = 150.0) 
 	apply_button(button, NAVY, false, 14)
 	button.custom_minimum_size.x = maxf(button.custom_minimum_size.x, minimum_width)
 	button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, 58.0)
-	button.add_theme_font_size_override("font_size", 19)
+	# Games may ask for larger answer text; never shrink it back to the action size.
+	var requested_font := button.get_theme_font_size("font_size") if button.has_theme_font_size_override("font_size") else 0
+	button.add_theme_font_size_override("font_size", maxi(19, requested_font))
 	button.set_meta("storybook_game_action", true)
 
 
@@ -145,3 +153,25 @@ static func apply_story_label(label: Label, color: Color = CREAM, font_size: int
 
 static func apply_prompt_plaque(panel: PanelContainer, fill: Color = CREAM) -> void:
 	panel.add_theme_stylebox_override("panel", plaque_style(fill, GOLD, 18))
+
+
+static func dress_dusk_backdrop(background: ColorRect) -> void:
+	background.color = DUSK_WASH
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if background.has_node("DuskMeadow"):
+		return
+	var meadow := TextureRect.new()
+	meadow.name = "DuskMeadow"
+	meadow.texture = load(MEADOW_BACKGROUND_PATH) as Texture2D
+	meadow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	meadow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	meadow.modulate = Color(1, 1, 1, DUSK_MEADOW_ALPHA)
+	meadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	meadow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	background.add_child(meadow)
+	var veil := ColorRect.new()
+	veil.name = "DuskVeil"
+	veil.color = DUSK_VEIL
+	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	background.add_child(veil)

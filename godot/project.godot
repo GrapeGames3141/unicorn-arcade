@@ -36,6 +36,7 @@ SafeArea="*res://autoload/safe_area.gd"
 AccessibleUI="*res://autoload/accessible_ui.gd"
 AdBarService="*res://autoload/ad_bar_service.gd"
 GameExperience="*res://autoload/game_experience.gd"
+AudioService="*res://autoload/audio_service.gd"
 RouteService="*res://autoload/route_service.gd"
 LegacyReactImport="*res://autoload/legacy_react_import.gd"
 

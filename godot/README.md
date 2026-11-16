@@ -132,6 +132,16 @@ That first Sparkle asset was the directional graybox. It was superseded by the s
 - Softer warm key, lavender fill, and reduced ambient energy retain texture detail without the prior frontal washout.
 - Pixel-matched GPU review captures live under `previews/meadow_presentation_v1/`.
 
+## Checkpoint 10 lighter art, one look, and sound
+
+- Companion and furniture textures are stored at 1024 px (512 px for emissive/roughness maps) and Cloud's mesh is reduced from 273k to 22k triangles, in line with the other companions. `assets/` drops from roughly 800 MB to 135 MB.
+- Unused room plates, the old alley map, an unused jump stone, and stray root-level concept images are removed. The nickel and $100 art now match the other currency images in framing and resolution.
+- Every menu, shop, alley, room, and game screen shares one dusk-meadow backdrop (`StorybookUI.dress_dusk_backdrop`), and backdrops bleed past the safe-area inset so no dark frame surrounds the artwork.
+- Answer buttons keep their requested text size (the shared restyle previously forced 19 px), and word/rhyme answers are larger.
+- `AudioService` adds synthesized sound effects and a looping music-box track, driven by the existing Music and Sound effects settings. Regenerate with `python3 tools/build_audio.py`.
+- Android adaptive launcher icon layers keep the whole unicorn inside the launcher mask.
+- Store screenshots under `store-listing/screenshots/` are re-rendered from this build.
+
 ## Run
 
 ```powershell

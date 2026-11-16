@@ -102,6 +102,7 @@ func _reset_page(use_meadow: bool = false) -> VBoxContainer:
 		background.color = NAVY
 		background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		add_child(background)
+		StorybookUI.dress_dusk_backdrop(background)
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 24)
 	margin.add_theme_constant_override("margin_right", 24)

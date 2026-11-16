@@ -63,6 +63,9 @@ func _apply_if_scene_root_id(instance_id: int) -> void:
 		current = get_tree().current_scene
 	if node == current or (is_instance_valid(current) and not current is Control and node.get_parent() == current):
 		_apply_to_root(node)
+	elif is_instance_valid(current) and current is Control and node.get_parent() == current and is_backdrop(node):
+		# Pages rebuild their backdrop after the root was inset.
+		_apply_to_root(current)
 
 
 func _apply_to_root(root: Control) -> void:
@@ -74,6 +77,7 @@ func _apply_to_root(root: Control) -> void:
 	var insets := _screen_insets(viewport_size)
 	var signature := Vector4(insets.position.x, insets.position.y, insets.size.x, insets.size.y)
 	if applied_roots.get(root.get_instance_id(), Vector4(-1, -1, -1, -1)) == signature:
+		_bleed_backdrops(root, insets)
 		return
 	applied_roots[root.get_instance_id()] = signature
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -81,6 +85,26 @@ func _apply_to_root(root: Control) -> void:
 	root.offset_top = insets.position.y
 	root.offset_right = -insets.size.x
 	root.offset_bottom = -insets.size.y
+	_bleed_backdrops(root, insets)
+
+
+## Controls stay inside the safe area, but full-screen backdrops paint out to
+## the physical screen edge so no dark frame shows around the artwork.
+func _bleed_backdrops(root: Control, insets: Rect2) -> void:
+	for child in root.get_children():
+		if is_backdrop(child):
+			var backdrop := child as Control
+			backdrop.offset_left = -insets.position.x
+			backdrop.offset_top = -insets.position.y
+			backdrop.offset_right = insets.size.x
+			backdrop.offset_bottom = insets.size.y
+
+
+static func is_backdrop(node: Node) -> bool:
+	if not (node is ColorRect or node is TextureRect or node.name == &"StorybookAtmosphere"):
+		return false
+	var control := node as Control
+	return control != null and is_zero_approx(control.anchor_left) and is_zero_approx(control.anchor_top) and is_equal_approx(control.anchor_right, 1.0) and is_equal_approx(control.anchor_bottom, 1.0)
 
 
 func _screen_insets(viewport_size: Vector2) -> Rect2:

@@ -64,7 +64,7 @@ static func section_title(value: String) -> Label:
 	var label := Label.new()
 	label.text = value
 	label.add_theme_font_size_override("font_size", 22)
-	label.add_theme_color_override("font_color", Color("9c356d"))
-	label.add_theme_color_override("font_outline_color", StorybookUI.CREAM)
+	label.add_theme_color_override("font_color", StorybookUI.GOLD_BRIGHT)
+	label.add_theme_color_override("font_outline_color", StorybookUI.PLUM)
 	label.add_theme_constant_override("outline_size", 3)
 	return label

@@ -403,6 +403,8 @@ func _handle_blast_input(value: String) -> void:
 func _successful_round(load_next := true) -> void:
 	hint_visible = false
 	round_index += 1
+	if round_index < target_rounds:
+		AudioService.play(&"correct")
 	if round_index >= target_rounds:
 		_complete_level()
 	elif load_next:
@@ -413,6 +415,8 @@ func _successful_round(load_next := true) -> void:
 
 func _lost_life() -> void:
 	lives -= 1
+	if lives > 0:
+		AudioService.play(&"wrong")
 	lives_label.text = "♥ %d" % maxi(0, lives)
 	message_label.text = "Not quite—%d hearts left." % maxi(0, lives)
 	if lives <= 0:
@@ -670,9 +674,9 @@ func _clear_options() -> void:
 func _add_option(text: String, payload) -> void:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(0, 72)
+	button.custom_minimum_size = Vector2(0, 96)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.add_theme_font_size_override("font_size", 19)
+	button.add_theme_font_size_override("font_size", 28)
 	button.pressed.connect(_choose.bind(payload))
 	options.add_child(button)
 

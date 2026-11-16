@@ -326,6 +326,7 @@ func _clear_matches(matches: Array[Dictionary], points_per_cell: int, allow_casc
 	for hit in hits:
 		board[hit.y][hit.x] = ""
 	score += hits.size() * points_per_cell
+	AudioService.play(&"correct")
 	var cascade_anchors := _apply_gravity()
 	if allow_cascade:
 		var cascade := _find_matches(cascade_anchors)

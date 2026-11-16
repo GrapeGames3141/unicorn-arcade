@@ -109,6 +109,8 @@ func _pick(answer: String) -> void:
 		_set_enabled(false)
 		return
 	round_index += 1
+	if round_index < target_rounds:
+		AudioService.play(&"correct")
 	if round_index >= target_rounds:
 		var reward := level_run.complete()
 		active = level_run.active
@@ -195,13 +197,15 @@ func _build_ui() -> void:
 	layout.add_child(progress_label)
 	var grid := GridContainer.new()
 	grid.columns = 2
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 12)
 	grid.add_theme_constant_override("v_separation", 12)
 	layout.add_child(grid)
 	for index in 4:
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(250, 100)
-		button.add_theme_font_size_override("font_size", 24)
+		button.custom_minimum_size = Vector2(0, 110)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.add_theme_font_size_override("font_size", 30)
 		button.pressed.connect(func() -> void: _pick(button.text))
 		grid.add_child(button)
 		option_buttons.append(button)

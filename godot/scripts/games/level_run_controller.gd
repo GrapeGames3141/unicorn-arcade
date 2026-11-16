@@ -54,6 +54,7 @@ func finish_endless(score: int, stage: int) -> int:
 	outcome = Outcome.SUCCESS
 	next_level = 1
 	ended_ms = Time.get_ticks_msec()
+	_play_sound(&"win")
 	reward = AppState.complete_endless_run(game_id, score, stage, elapsed_ms())
 	return reward
 
@@ -66,6 +67,7 @@ func complete() -> int:
 	next_level = level + 1
 	ended_ms = Time.get_ticks_msec()
 	var frozen_elapsed := elapsed_ms()
+	_play_sound(&"win")
 	reward = AppState.complete_level(game_id, level, frozen_elapsed)
 	return reward
 
@@ -76,6 +78,7 @@ func fail(message: String) -> void:
 	outcome = Outcome.FAILURE
 	outcome_message = message
 	ended_ms = Time.get_ticks_msec()
+	_play_sound(&"lose")
 
 func can_retry() -> bool:
 	return outcome == Outcome.FAILURE
@@ -87,3 +90,10 @@ func retry() -> int:
 
 func select_category() -> String:
 	return str(GameRegistry.get_game(game_id).get("category", "Number"))
+
+func _play_sound(id: StringName) -> void:
+	# Looked up by path so rule tests that run without autoloads stay valid.
+	var loop := Engine.get_main_loop() as SceneTree
+	var audio := loop.root.get_node_or_null("AudioService") if loop != null else null
+	if audio != null:
+		audio.play(id)

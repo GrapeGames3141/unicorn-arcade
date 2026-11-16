@@ -33,6 +33,7 @@ func _build_ui() -> void:
 	bg.color = NAVY
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
+	StorybookUI.dress_dusk_backdrop(bg)
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 20)
 	margin.add_theme_constant_override("margin_right", 20)

@@ -108,6 +108,8 @@ func _choose(absolute_index: int) -> void:
 	if level_data[absolute_index] != maximum:
 		_fail("Wrong node selected! The maximum was %d." % maximum)
 		return
+	if window_pos + window_size < level_data.size():
+		AudioService.play(&"correct")
 	if window_pos + window_size >= level_data.size():
 		var reward := level_run.complete()
 		active = level_run.active

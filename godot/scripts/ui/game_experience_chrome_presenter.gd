@@ -4,7 +4,6 @@ extends RefCounted
 const StorybookUI = preload("res://scripts/ui/storybook_ui.gd")
 const CompanionAssets = preload("res://scripts/meta/companion_asset_catalog.gd")
 const PENNY_TEXTURE_PATH := "res://assets/games/currency/penny.png"
-const MEADOW_BACKGROUND_PATH := "res://assets/meta/environments/magical_meadow_v1.png"
 
 
 func find_primary_layout(node: Node) -> VBoxContainer:
@@ -26,27 +25,13 @@ func apply_storybook_atmosphere(scene: Node) -> void:
 	atmosphere.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	atmosphere.z_index = -20
 	var wash := ColorRect.new()
-	wash.color = Color("120d2e")
-	wash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	wash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	StorybookUI.dress_dusk_backdrop(wash)
 	atmosphere.add_child(wash)
-	var meadow := TextureRect.new()
-	meadow.texture = load(MEADOW_BACKGROUND_PATH) as Texture2D
-	meadow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	meadow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	meadow.modulate = Color(1, 1, 1, 0.34)
-	meadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	meadow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	atmosphere.add_child(meadow)
-	var veil := ColorRect.new()
-	veil.color = Color(0.08, 0.05, 0.22, 0.42)
-	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	atmosphere.add_child(veil)
 	scene.add_child(atmosphere)
 	scene.move_child(atmosphere, 0)
 	for child in scene.get_children():
-		if child is ColorRect and child != wash and child != veil:
+		if child is ColorRect and child != wash:
 			var rect := child as ColorRect
 			if is_equal_approx(rect.anchor_right, 1.0) and is_equal_approx(rect.anchor_bottom, 1.0):
 				rect.color = Color(rect.color, 0.12)

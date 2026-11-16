@@ -136,6 +136,7 @@ func _choose_node(index: int) -> void:
 		return
 	jump_in_progress = true
 	_set_nodes_enabled(false)
+	AudioService.play(&"pop")
 	await _animate_jump(current_index, index)
 	current_index = index
 	visited.append(index)

@@ -195,9 +195,11 @@ func _resolve_wave(force_correct := false) -> bool:
 		var gained := Rules.comet_correct_score(level, remaining)
 		score += gained
 		rescues += 1
+		AudioService.play(&"correct")
 		status_label.text = "Correct! Rescue star gained: +%d score." % gained
 	else:
 		lives -= 1
+		AudioService.play(&"wrong")
 		status_label.text = "Not this comet. Shield lost — %d shield hearts left." % lives
 	_finish_wave()
 	return correct

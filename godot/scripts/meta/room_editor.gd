@@ -126,6 +126,7 @@ func _build_editor() -> void:
 	bg.color = NAVY
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
+	StorybookUI.dress_dusk_backdrop(bg)
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 14)
 	root.add_theme_constant_override("separation", 7)

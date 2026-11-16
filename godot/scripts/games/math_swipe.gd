@@ -102,6 +102,7 @@ func _submit(card: Button) -> void:
 			_set_cards_enabled(false)
 		else:
 			message_label.text = "Correct!"
+			AudioService.play(&"correct")
 			_refresh_question.call_deferred(_round_generation)
 	else:
 		var explanation := "The complete equation is %s. Try again!" % str(problem["display"]).replace("?", str(problem["correct"]))

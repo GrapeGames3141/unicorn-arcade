@@ -90,6 +90,7 @@ done
 
 for scene in \
 	galaxy_pause_opening_test \
+	audio_service_test \
 	ad_layout_integration \
 	sliding_window_scope_test \
 	unicorn_header_scope_test \

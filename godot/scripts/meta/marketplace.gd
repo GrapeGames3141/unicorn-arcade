@@ -97,6 +97,7 @@ func _build_fixed_tree() -> void:
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(background)
+	StorybookUI.dress_dusk_backdrop(background)
 
 	_build_header()
 	_build_tabs()

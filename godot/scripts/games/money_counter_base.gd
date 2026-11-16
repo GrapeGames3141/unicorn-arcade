@@ -39,6 +39,8 @@ func _apply_money_value(value: int, failure_reason: String) -> Dictionary:
 	if transition.get("outcome") == OUTCOME_IGNORED:
 		return transition
 	total = int(transition["total"])
+	if str(transition["outcome"]) not in [OUTCOME_EXACT, OUTCOME_OVERSHOOT]:
+		AudioService.play(&"coin")
 	match str(transition["outcome"]):
 		OUTCOME_EXACT:
 			transition["reward"] = level_run.complete()

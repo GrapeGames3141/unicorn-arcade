@@ -190,6 +190,7 @@ func _resolve_collisions() -> void:
 				if int(enemy["hp"]) <= 0:
 					kills += 1
 					score += int(enemy["score"])
+					AudioService.play(&"pop")
 					var pickup := _roll_pickup(enemy["position"])
 					if not pickup.is_empty():
 						pickups.append(pickup)
