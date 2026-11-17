@@ -41,6 +41,8 @@ func build_game_outcome(parent: Control, retry: bool, message: String, endless :
 	category.text = "RETURN TO CATEGORY"
 	StorybookUI.apply_game_action(category, 260)
 	stack.add_child(category)
+	if not retry:
+		overlay.add_child(ConfettiBurst.new())
 	return {"overlay": overlay, "primary": primary, "category": category}
 
 

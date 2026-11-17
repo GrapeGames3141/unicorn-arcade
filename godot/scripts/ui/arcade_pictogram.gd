@@ -81,6 +81,9 @@ func _draw_symbol() -> void:
 		"chain_link": _links()
 		"galaxy_unicorn": _galaxy_ship()
 		"comet_math_rescue": _comet_math()
+		"pattern_parade": _pattern()
+		"memory_meadow": _memory_cards()
+		"bubble_count": _bubbles()
 		_: _spark(Vector2.ZERO, 18, accent)
 
 
@@ -279,3 +282,30 @@ func _spark(center: Vector2, radius: float, color: Color) -> void:
 
 func _glyph(value: String, origin: Vector2, width: float, color: Color, font_size: int) -> void:
 	draw_string(ThemeDB.fallback_font, origin, value, HORIZONTAL_ALIGNMENT_CENTER, width, font_size, color)
+
+
+func _pattern() -> void:
+	for index in 3:
+		var center := Vector2(-26 + index * 26, -12)
+		if index == 1:
+			draw_rect(Rect2(center - Vector2(9, 9), Vector2(18, 18)), PINK, true)
+		else:
+			draw_circle(center, 10, accent)
+	draw_circle(Vector2(-26, 16), 10, accent)
+	draw_rect(Rect2(-9, 7, 18, 18), PINK, true)
+	draw_arc(Vector2(26, 16), 10, 0, TAU, 24, StorybookUI.GOLD_BRIGHT, 4, true)
+
+
+func _memory_cards() -> void:
+	draw_rect(Rect2(-32, -22, 28, 40), Color(accent, 0.55), true)
+	draw_rect(Rect2(-32, -22, 28, 40), StorybookUI.CREAM, false, 3)
+	draw_rect(Rect2(2, -18, 30, 42), StorybookUI.CREAM, true)
+	_spark(Vector2(17, 3), 11, PINK)
+	_spark(Vector2(-18, -2), 7, StorybookUI.GOLD_BRIGHT)
+
+
+func _bubbles() -> void:
+	for bubble in [[Vector2(-15, 8), 19.0, accent], [Vector2(17, -10), 14.0, PINK], [Vector2(16, 22), 9.0, StorybookUI.GOLD_BRIGHT]]:
+		draw_circle(bubble[0], bubble[1], Color(bubble[2], 0.35))
+		draw_arc(bubble[0], bubble[1], 0, TAU, 28, bubble[2], 4, true)
+		draw_arc(bubble[0], bubble[1] * 0.62, -2.5, -1.4, 8, StorybookUI.CREAM, 3, true)

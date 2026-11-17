@@ -102,11 +102,15 @@ func _pick(answer: String) -> void:
 	if not active:
 		return
 	if answer != challenge["answer"]:
-		level_run.fail("Pick the word that rhymes! Try this level again.")
+		# Teach the right answer instead of only reporting the miss.
+		var lesson := "\"%s\" rhymes with \"%s\". Try this level again!" % [str(challenge["answer"]).capitalize(), str(challenge["prompt"])]
+		level_run.fail(lesson)
 		active = level_run.active
 		failed = level_run.outcome == LevelRunController.Outcome.FAILURE
-		message_label.text = "Pick the word that rhymes! Try this level again."
+		message_label.text = lesson
 		_set_enabled(false)
+		for button in option_buttons:
+			button.modulate = Color("ffe172") if button.text == str(challenge["answer"]) else Color(1, 1, 1, 0.55)
 		return
 	round_index += 1
 	if round_index < target_rounds:

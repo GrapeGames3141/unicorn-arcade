@@ -71,6 +71,7 @@ func build_header(title: String, coins: int, back_cb: Callable, home_cb: Callabl
 	panel.add_child(row)
 	var back := header_button("‹", "Back to game category")
 	back.name = "GameHeaderBack"
+	back.add_theme_font_size_override("font_size", 32)
 	back.pressed.connect(back_cb)
 	row.add_child(back)
 	var home := header_button("", "Home")
@@ -90,6 +91,7 @@ func build_header(title: String, coins: int, back_cb: Callable, home_cb: Callabl
 	row.add_child(title_label)
 	var profile := header_button("👤", "Open profile without leaving this game")
 	profile.name = "GameHeaderProfile"
+	profile.add_theme_font_size_override("font_size", 24)
 	profile.pressed.connect(profile_cb)
 	row.add_child(profile)
 	var coin_button := header_button("", "Current coin balance")
@@ -98,7 +100,9 @@ func build_header(title: String, coins: int, back_cb: Callable, home_cb: Callabl
 	coin_button.disabled = true
 	coin_button.icon = load(PENNY_TEXTURE_PATH) as Texture2D
 	coin_button.expand_icon = true
-	coin_button.add_theme_constant_override("icon_max_width", 28)
+	coin_button.add_theme_constant_override("icon_max_width", 30)
+	# The balance is display-only; keep its coin bright instead of greyed out.
+	coin_button.add_theme_color_override("icon_disabled_color", Color.WHITE)
 	coin_button.add_theme_color_override("font_disabled_color", StorybookUI.GOLD_BRIGHT)
 	row.add_child(coin_button)
 	update_coin_button(coin_button, coins)
@@ -214,7 +218,7 @@ func configure_comet_chrome(scene: Node, game_id: String) -> void:
 func restyle_controls(node: Node) -> void:
 	if node is Button:
 		var button := node as Button
-		if not button.has_meta("standard_game_chrome") and not button.has_meta("currency_art") and not button.has_meta("mathtris_tile") and not button.has_meta("sliding_window_node"):
+		if not button.has_meta("standard_game_chrome") and not button.has_meta("currency_art") and not button.has_meta("mathtris_tile") and not button.has_meta("sliding_window_node") and not button.has_meta("custom_game_art"):
 			StorybookUI.apply_game_action(button, maxf(96.0, button.custom_minimum_size.x))
 			button.custom_minimum_size.y = maxf(56.0, button.custom_minimum_size.y)
 			var copy := button.text.to_upper()

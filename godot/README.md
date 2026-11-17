@@ -142,6 +142,16 @@ That first Sparkle asset was the directional graybox. It was superseded by the s
 - Android adaptive launcher icon layers keep the whole unicorn inside the launcher mask.
 - Store screenshots under `store-listing/screenshots/` are re-rendered from this build.
 
+## Checkpoint 11 three new games and polish
+
+- **Memory Meadow** (Mystery): flip two cards at a time to find matching pairs; boards grow from 3 to 8 pairs and each miss uses a peek.
+- **Pattern Parade** (Number): choose what comes next in a shape pattern, then in skip-counting number sequences at higher levels; three hearts per level.
+- **Bubble Count** (Arcade): pop drifting numbered bubbles from smallest to biggest, counting by 1s, 2s, 5s, then 10s; bubbles bounce apart so numbers never hide.
+- All three draw their art in code through `ShapeTile`, so they add no image files. `tests/new_games_integration.gd` plays each through a win, a loss, a retry, and a hint.
+- The registry now holds 26 games (7 Number, 10 Word, 6 Mystery, 3 Arcade).
+- Level-complete cards shower confetti (`ConfettiBurst`, skipped under Reduced motion); Rhyme Rally shows the correct rhyme after a miss.
+- Companion portraits are cropped to the unicorn so they read about twice as large; the Home button is a gold house; game-header back, profile, and coin icons are larger and no longer greyed out.
+
 ## Run
 
 ```powershell

@@ -35,19 +35,19 @@ func _init() -> void:
 	_check(rewards.level_reward(10) == 60, "level 10 reward is 60")
 	_check(rewards.hint_cost(1) == 0, "level 1 hints are free")
 	_check(rewards.hint_cost(2) == 5, "paid hint cost is 5")
-	_check(registry.all_games().size() == 23, "registry contains 23 games")
-	_check(registry.games_in_category("Number").size() == 6, "number category contains 6 games")
+	_check(registry.all_games().size() == 26, "registry contains 26 games")
+	_check(registry.games_in_category("Number").size() == 7, "number category contains 7 games")
 	_check(registry.games_in_category("Word").size() == 10, "word category contains 10 games")
-	_check(registry.games_in_category("Mystery").size() == 5, "mystery category contains 5 games")
-	_check(registry.games_in_category("Arcade").size() == 2, "arcade category contains 2 games")
-	_check(registry.playable_games().size() == 23, "all 23 games are playable")
-	_check(registry.playable_count("Number") == 6, "all six number games are playable")
+	_check(registry.games_in_category("Mystery").size() == 6, "mystery category contains 6 games")
+	_check(registry.games_in_category("Arcade").size() == 3, "arcade category contains 3 games")
+	_check(registry.playable_games().size() == 26, "all 26 games are playable")
+	_check(registry.playable_count("Number") == 7, "all seven number games are playable")
 	_check(registry.playable_count("Word") == 10, "all ten word games are playable")
-	_check(registry.playable_count("Mystery") == 5, "all five mystery games are playable")
-	_check(registry.playable_count("Arcade") == 2, "both arcade games are playable")
+	_check(registry.playable_count("Mystery") == 6, "all six mystery games are playable")
+	_check(registry.playable_count("Arcade") == 3, "all three arcade games are playable")
 	_check(ResourceLoader.exists("res://scenes/games/comet_math_rescue.tscn"), "Comet Math Rescue scene is present")
 	var registered_ids: Array = registry.all_games().map(func(game: Dictionary): return game["id"])
-	_check(TutorialCatalog.covers_all(registered_ids), "all 23 games provide three guided tutorial levels")
+	_check(TutorialCatalog.covers_all(registered_ids), "all 26 games provide three guided tutorial levels")
 	_check(CompanionAbilityScript.ABILITIES.size() == 6, "all six unicorns have exactly one universal companion ability")
 	_check(is_equal_approx(ProfileComponents.category_progress([{"id":"a"},{"id":"b"}], func(id: String) -> int: return 21 if id == "a" else 1), 0.5) and ProfileComponents.category_runs([{"id":"a"}], func(_id: String) -> Dictionary: return {"completed":[1,2]} ) == 2, "profile component aggregates explicit level and progress callbacks")
 	var penny_texture := load("res://assets/games/currency/penny.png") as Texture2D
@@ -303,7 +303,7 @@ func _validate_game_controller_contract() -> bool:
 			return false
 		if not _script_extends_arcade_controller(scene_contents.substr(path_start, path_end - path_start)):
 			return false
-	return checked_scenes.size() == 10
+	return checked_scenes.size() == 13
 
 
 func _script_extends_arcade_controller(script_path: String, visited := {}) -> bool:

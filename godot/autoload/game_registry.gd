@@ -7,6 +7,7 @@ const GAMES := [
 	{"id": "cash_counter", "title": "Cash Counter", "category": "Number", "scene": "res://scenes/games/cash_counter.tscn"},
 	{"id": "math_swipe", "title": "Math Swipe", "category": "Number", "scene": "res://scenes/games/math_swipe.tscn"},
 	{"id": "mathtris", "title": "Mathtris", "category": "Number", "scene": "res://scenes/games/mathtris.tscn"},
+	{"id": "pattern_parade", "title": "Pattern Parade", "category": "Number", "scene": "res://scenes/games/pattern_parade.tscn"},
 	{"id": "unicorn_blast", "title": "Unicorn Blast", "category": "Word", "scene": "res://scenes/games/word_game.tscn"},
 	{"id": "rhyme_rally", "title": "Rhyme Rally", "category": "Word", "scene": "res://scenes/games/rhyme_rally.tscn"},
 	{"id": "sentence_sprout", "title": "Sentence Sprout", "category": "Word", "scene": "res://scenes/games/word_game.tscn"},
@@ -22,8 +23,10 @@ const GAMES := [
 	{"id": "odd_one_out", "title": "Odd One Out", "category": "Mystery", "scene": "res://scenes/games/word_game.tscn"},
 	{"id": "size_line_up", "title": "Size Line-Up", "category": "Mystery", "scene": "res://scenes/games/word_game.tscn"},
 	{"id": "chain_link", "title": "Chain Link", "category": "Mystery", "scene": "res://scenes/games/word_game.tscn"},
+	{"id": "memory_meadow", "title": "Memory Meadow", "category": "Mystery", "scene": "res://scenes/games/memory_meadow.tscn"},
 	{"id": "galaxy_unicorn", "title": "Galaxy Unicorn", "category": "Arcade", "scene": "res://scenes/games/galaxy_unicorn.tscn"},
 	{"id": "comet_math_rescue", "title": "Comet Math Rescue", "category": "Arcade", "scene": "res://scenes/games/comet_math_rescue.tscn"},
+	{"id": "bubble_count", "title": "Bubble Count", "category": "Arcade", "scene": "res://scenes/games/bubble_count.tscn"},
 ]
 
 
