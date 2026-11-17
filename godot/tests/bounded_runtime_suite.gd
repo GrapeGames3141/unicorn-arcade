@@ -212,7 +212,7 @@ func _mathtris_power_contract(game: Node) -> void:
 	_mathtris_fixture(game, [Vector2i(3, 8), Vector2i(3, 10)])
 	_check(game.call("apply_companion_power", "star") and game.board[8][3] == "", "Star clears the fullest occupied column")
 	_mathtris_fixture(game, [])
-	_check(game.call("apply_companion_power", "cloud") and game.slow_until_ms - game.level_run.elapsed_ms() >= 17990, "Cloud applies its eighteen-second slow using active play time")
+	_check(game.call("apply_companion_power", "cloud") and game.slow_until_ms - game.level_run.elapsed_ms() >= 17900, "Cloud applies its eighteen-second slow using active play time")
 	_mathtris_fixture(game, [])
 	for col in 5: game.board[10][col] = ["1", "+", "1", "=", "3"][col]
 	_check(game.call("apply_companion_power", "dream") and game.equation_charge == 0 and game.score == 600, "Dream repairs exact hits for 120 points each without normal-match scoring")

@@ -24,7 +24,7 @@ func build_dashboard(category_callback: Callable) -> void:
 		{"name": "Number", "desc": "Logic & arithmetic", "color": StorybookUI.CYAN},
 		{"name": "Word", "desc": "Vocabulary, spelling & rhymes", "color": PINK},
 		{"name": "Mystery", "desc": "Detective word puzzles", "color": Color("9b8cff")},
-		{"name": "Arcade", "desc": "Experimental action", "color": Color("62e6a7")},
+		{"name": "Arcade", "desc": "Fast-action adventures", "color": Color("62e6a7")},
 	]:
 		var category_name := str(category["name"])
 		var games := GameRegistry.games_in_category(category_name)

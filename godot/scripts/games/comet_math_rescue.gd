@@ -312,11 +312,11 @@ func _update_comet_positions() -> void:
 		button.modulate = Color("fff2a8") if hinted else (Color("ffffff") if selected else Color("d9e9ff"))
 		button.scale = Vector2.ONE * (1.08 if hinted else (1.04 if selected else 1.0))
 	if is_instance_valid(player_preview):
-		player_preview.position = Vector2((selected_lane + 0.5) * size.x / LANES - player_preview.size.x * 0.5, size.y - 172.0)
+		player_preview.position = Vector2((selected_lane + 0.5) * size.x / LANES - player_preview.size.x * 0.5, size.y - 236.0)
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color("110a32"))
+	draw_rect(Rect2(Vector2(-96, -96), size + Vector2(192, 192)), Color("110a32"))
 	for lane in range(1, LANES):
 		var x := lane * size.x / LANES
 		draw_line(Vector2(x, 165), Vector2(x, size.y - 115), Color("6f68ac", 0.58), 5.0)
@@ -335,8 +335,8 @@ func _draw() -> void:
 	if bolt_ms > 0.0 and bolt_lane >= 0:
 		var x := (bolt_lane + 0.5) * size.x / LANES
 		var alpha := bolt_ms / 520.0
-		draw_line(Vector2(x, size.y - 138), Vector2(x, START_Y + size.y * 0.46), Color(0.37, 0.91, 1.0, alpha), 14.0)
-		draw_line(Vector2(x, size.y - 138), Vector2(x, START_Y + size.y * 0.46), Color("ffe172", alpha), 5.0)
+		draw_line(Vector2(x, size.y - 202), Vector2(x, START_Y + size.y * 0.46), Color(0.37, 0.91, 1.0, alpha), 14.0)
+		draw_line(Vector2(x, size.y - 202), Vector2(x, START_Y + size.y * 0.46), Color("ffe172", alpha), 5.0)
 
 
 func _build_ui() -> void:

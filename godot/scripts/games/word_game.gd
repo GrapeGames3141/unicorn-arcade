@@ -302,7 +302,10 @@ func _render_sequence() -> void:
 		prompt_label.text = current.get("word", "")
 		secondary_label.text = "Stamped: %s" % "-".join(built)
 	elif phase == "scramble":
-		prompt_label.text = "".join(built).to_upper()
+		var slots: Array[String] = []
+		for index in sequence.size():
+			slots.append(built[index].to_upper() if index < built.size() else "_")
+		prompt_label.text = " ".join(slots)
 		secondary_label.text = "Next letter: %s" % sequence[picked.size()].to_upper() if hint_visible and picked.size() < sequence.size() else ""
 	elif phase == "size":
 		prompt_label.text = " → ".join(built) if not built.is_empty() else "Line them up!"
@@ -695,7 +698,7 @@ func _build_ui() -> void:
 	margin.add_theme_constant_override("margin_left", 20)
 	margin.add_theme_constant_override("margin_right", 20)
 	margin.add_theme_constant_override("margin_top", 24)
-	margin.add_theme_constant_override("margin_bottom", 20)
+	margin.add_theme_constant_override("margin_bottom", 24)
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(margin)
 	var layout := VBoxContainer.new()

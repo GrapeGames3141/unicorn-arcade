@@ -286,7 +286,7 @@ func _advance_level() -> void:
 
 func _draw() -> void:
 	# Star field and nebula haze.
-	draw_rect(Rect2(Vector2.ZERO, size), Color("160d3b"))
+	draw_rect(Rect2(Vector2(-96, -96), size + Vector2(192, 192)), Color("160d3b"))
 	for index in 48:
 		var x := fmod(index * 97.0, 1000.0) / 1000.0 * size.x
 		var y := fmod(index * 53.0 + Time.get_ticks_msec() * (0.01 + (index % 5) * 0.003), maxf(1.0, size.y))

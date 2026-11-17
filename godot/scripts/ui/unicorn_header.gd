@@ -51,7 +51,7 @@ static func build(title: String, back_text: String, back_action: Callable, home_
 	if has_trailing_action:
 		# Trailing headers have a deliberately centered title inside the usable
 		# navigation lane, rather than clipping it behind the action cluster.
-		_anchor_rect(label, 0.0, 1.0, 88, -202, 8, 56)
+		_anchor_rect(label, 0.0, 1.0, 88, -206, 8, 56)
 	else:
 		_anchor_rect(label, 0.5, 0.5, -100, 100, 8, 56)
 	panel.add_child(label)
@@ -82,7 +82,7 @@ static func build(title: String, back_text: String, back_action: Callable, home_
 	_compact_button(home)
 	home.custom_minimum_size = Vector2(48, 48)
 	if has_trailing_action:
-		_anchor_rect(home, 1.0, 1.0, -192, -144, 8, 56)
+		_anchor_rect(home, 1.0, 1.0, -202, -154, 8, 56)
 	else:
 		_anchor_rect(home, 1.0, 1.0, -144, -96, 8, 56)
 	home.pressed.connect(home_action)
@@ -99,7 +99,7 @@ static func build(title: String, back_text: String, back_action: Callable, home_
 	coin_icon.add_theme_constant_override("outline_size", 3)
 	coin_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if has_trailing_action:
-		_anchor_rect(coin_icon, 1.0, 1.0, -140, -118, 12, 52)
+		_anchor_rect(coin_icon, 1.0, 1.0, -150, -128, 12, 52)
 	else:
 		_anchor_rect(coin_icon, 1.0, 1.0, -88, -66, 12, 52)
 	actions.add_child(coin_icon)
@@ -114,7 +114,7 @@ static func build(title: String, back_text: String, back_action: Callable, home_
 	coins.add_theme_constant_override("outline_size", 2)
 	coins.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if has_trailing_action:
-		_anchor_rect(coins, 1.0, 1.0, -114, -62, 10, 54)
+		_anchor_rect(coins, 1.0, 1.0, -126, -74, 10, 54)
 	else:
 		_anchor_rect(coins, 1.0, 1.0, -62, -6, 10, 54)
 	actions.add_child(coins)
@@ -128,7 +128,7 @@ static func build(title: String, back_text: String, back_action: Callable, home_
 		trailing.add_theme_font_size_override("font_size", 14)
 		StorybookUI.apply_button(trailing, Color("22345f"), false, 12)
 		_compact_button(trailing)
-		_anchor_rect(trailing, 1.0, 1.0, -58, -6, 8, 56)
+		_anchor_rect(trailing, 1.0, 1.0, -68, -6, 8, 56)
 		trailing.pressed.connect(trailing_action)
 		actions.add_child(trailing)
 	return panel
