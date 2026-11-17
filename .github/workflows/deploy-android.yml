@@ -226,8 +226,25 @@ jobs:
             }
             core.info(`Kept the newest ${keep} ${artifactName} artifact(s); deleted ${stale.length}.`);
 
+      # Google Play accepts exactly one form of this request depending on the
+      # app's review state: normally the flag must be absent, but while a change
+      # is held back from review it must be present. Try the normal form first
+      # and fall back, so the deploy works in either state. A failed attempt
+      # never commits its edit, so the retry cannot double-publish.
       - name: Upload to Play Store Internal track
+        id: play_upload
         if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          packageName: com.grapegames.wlarcade
+          releaseFiles: godot/build/android/UnicornArcade.aab
+          tracks: internal
+          status: completed
+
+      - name: Upload to Play Store Internal track (changes not sent for review)
+        if: github.ref == 'refs/heads/main' && steps.play_upload.outcome == 'failure'
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
