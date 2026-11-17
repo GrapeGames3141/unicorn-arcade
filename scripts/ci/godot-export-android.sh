@@ -142,7 +142,7 @@ set_package_name() {
 
 godot_import_is_warm() {
 	local probe imported_count
-	probe="$(ls -1 "$PROJECT/.godot/imported"/unicorn_house_home_v1.png-*.ctex 2>/dev/null | head -1 || true)"
+	probe="$(ls -1 "$PROJECT/.godot/imported"/home_glyph_v2.png-*.ctex 2>/dev/null | head -1 || true)"
 	[[ -n "$probe" && -s "$probe" ]] || return 1
 	imported_count="$(find "$PROJECT/.godot/imported" -type f | wc -l | tr -d ' ')"
 	# Fresh checkouts with a partial cache can have the probe but almost nothing else.

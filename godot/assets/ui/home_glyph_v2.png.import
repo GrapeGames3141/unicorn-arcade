@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://clnv1gevk2dv2"
-path="res://.godot/imported/unicorn_house_home_v1.png-a83d04d68f46a713d8b5384883dcbc2b.ctex"
+uid="uid://dndepya0nn4gg"
+path="res://.godot/imported/home_glyph_v2.png-c918391ae262fa984334b0aed5cea855.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/unicorn_house_home_v1.png"
-dest_files=["res://.godot/imported/unicorn_house_home_v1.png-a83d04d68f46a713d8b5384883dcbc2b.ctex"]
+source_file="res://assets/ui/home_glyph_v2.png"
+dest_files=["res://.godot/imported/home_glyph_v2.png-c918391ae262fa984334b0aed5cea855.ctex"]
 
 [params]
 

@@ -68,7 +68,7 @@ static func build(title: String, back_text: String, back_action: Callable, home_
 	home.tooltip_text = "Home"
 	# Keep the authored house graphic as a fixed child. Assigning it to Button's
 	# icon slot gives the control a 56px combined minimum on some Android themes.
-	StorybookUI.apply_button(home, Color("22345f"), false, 12)
+	StorybookUI.apply_button(home, StorybookUI.HOME_FILL, true, 12)
 	home.text = ""
 	var home_texture := load(StorybookUI.UNICORN_HOUSE_HOME_ICON_PATH) as Texture2D
 	var home_glyph := TextureRect.new()
@@ -77,7 +77,7 @@ static func build(title: String, back_text: String, back_action: Callable, home_
 	home_glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	home_glyph.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	home_glyph.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_anchor_rect(home_glyph, 0.5, 0.5, -12, 12, 12, 36)
+	_anchor_rect(home_glyph, 0.5, 0.5, -17, 17, 7, 41)
 	home.add_child(home_glyph)
 	_compact_button(home)
 	home.custom_minimum_size = Vector2(48, 48)

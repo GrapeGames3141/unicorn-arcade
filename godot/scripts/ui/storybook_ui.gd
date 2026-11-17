@@ -11,7 +11,9 @@ const INK := Color("172143")
 const CYAN := Color("58d6e8")
 const PLUM := Color("3c183d")
 const MUTED := Color("c9d3ef")
-const UNICORN_HOUSE_HOME_ICON_PATH := "res://assets/ui/unicorn_house_home_v1.png"
+const UNICORN_HOUSE_HOME_ICON_PATH := "res://assets/ui/home_glyph_v2.png"
+## Home is the one header button drawn in gold so it is easy to spot.
+const HOME_FILL := Color("f4c95d")
 const MEADOW_BACKGROUND_PATH := "res://assets/meta/environments/magical_meadow_v1.png"
 ## One shared "meadow at dusk" backdrop keeps menus, shop, rooms, and games in
 ## the same world as the Home meadow while leaving cream text readable.
@@ -75,7 +77,7 @@ static func hint_highlight_button(text: String, minimum_width: float, callback: 
 
 
 static func apply_home_button(button: BaseButton, icon_width: int = 34) -> void:
-	apply_button(button, Color("22345f"), false, 14)
+	apply_button(button, HOME_FILL, true, 14)
 	button.text = ""
 	var home_icon := load(UNICORN_HOUSE_HOME_ICON_PATH) as Texture2D
 	if home_icon != null:
